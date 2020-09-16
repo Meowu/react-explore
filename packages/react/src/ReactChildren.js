@@ -37,7 +37,7 @@ function escape(key: string): string {
     return escaperLookup[match];
   });
 
-  return '$' + escapedString;
+  return '$' + escapedString; // 1=::=2 -> .$1=0=2=2=02
 }
 
 /**
