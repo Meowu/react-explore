@@ -56,7 +56,7 @@ export type Fiber = {|
   // minimize the number of objects created during the initial render.
 
   // Tag identifying the type of fiber.
-  tag: WorkTag,
+  tag: WorkTag, // FunctionComponent(0), ClassComponent(1) ...
 
   // Unique identifier of this child.
   key: null | string,
@@ -66,7 +66,7 @@ export type Fiber = {|
   elementType: any,
 
   // The resolved function/class/ associated with this fiber.
-  type: any,
+  type: any, // fiber 对应的函数组件或者类组件本身。
 
   // The local state associated with this fiber.
   stateNode: any,

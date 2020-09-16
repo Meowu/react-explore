@@ -81,6 +81,7 @@ function getMaskedContext(
   if (disableLegacyContext) {
     return emptyContextObject;
   } else {
+    // Component.contextTypes 是 16.3 版本之前的 legacy context api 。
     const type = workInProgress.type;
     const contextTypes = type.contextTypes;
     if (!contextTypes) {
@@ -130,6 +131,7 @@ function isContextProvider(type: Function): boolean {
   if (disableLegacyContext) {
     return false;
   } else {
+    // context provider 需要定义 .childContextTypes 以及 getChildContext(), 从而子组件通过定义 contextTypes 获取到传递的值。
     const childContextTypes = type.childContextTypes;
     return childContextTypes !== null && childContextTypes !== undefined;
   }

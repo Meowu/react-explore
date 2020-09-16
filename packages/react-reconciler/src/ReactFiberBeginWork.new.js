@@ -255,6 +255,7 @@ export function reconcileChildren(
 
     // If we had any progressed work already, that is invalid at this point so
     // let's throw it out.
+    // 有可能还没开始，或者已经执行中尚未完成。
     workInProgress.child = reconcileChildFibers(
       workInProgress,
       current.child,
@@ -264,6 +265,7 @@ export function reconcileChildren(
   }
 }
 
+// 卸载旧的 child ，挂载新的 child 。
 function forceUnmountCurrentAndReconcile(
   current: Fiber,
   workInProgress: Fiber,
@@ -326,6 +328,7 @@ function updateForwardRef(
   const render = Component.render;
   const ref = workInProgress.ref;
 
+  // 既然一样，这里跟 updateFunctionComponent 的区别是什么。
   // The rest is a fork of updateFunctionComponent
   let nextChildren;
   prepareToReadContext(workInProgress, renderLanes);
