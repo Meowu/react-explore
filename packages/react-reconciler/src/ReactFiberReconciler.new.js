@@ -337,7 +337,8 @@ export {
 export function getPublicRootInstance(
   container: OpaqueRoot,
 ): React$Component<any, any> | PublicInstance | null {
-  const containerFiber = container.current;
+  const containerFiber = container.current; // FiberNode
+  // 这里为什么返回 null 。
   if (!containerFiber.child) {
     return null;
   }

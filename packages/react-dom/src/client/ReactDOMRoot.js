@@ -65,7 +65,7 @@ function ReactDOMRoot(container: Container, options: void | RootOptions) {
 
 function ReactDOMBlockingRoot(
   container: Container,
-  tag: RootTag,
+  tag: RootTag, // LegacyRoot-0，BlockingRoot-1，ConcurrentRoot-2
   options: void | RootOptions,
 ) {
   this._internalRoot = createRootImpl(container, tag, options);
@@ -131,10 +131,11 @@ function createRootImpl(
       options.hydrationOptions != null &&
       options.hydrationOptions.mutableSources) ||
     null;
-  const root = createContainer(container, tag, hydrate, hydrationCallbacks);
-  markContainerAsRoot(root.current, container);
+  const root = createContainer(container, tag, hydrate, hydrationCallbacks); // FiberRootNode
+  markContainerAsRoot(root.current /* FiberNode */, container); // 把 Fiber 添加到 container 上标识 __reactContainer¥。
   const containerNodeType = container.nodeType;
 
+  // 以下代码的作用是什么？事件系统相关？
   if (enableEagerRootListeners) {
     const rootContainerElement =
       container.nodeType === COMMENT_NODE ? container.parentNode : container;

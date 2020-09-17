@@ -26,6 +26,7 @@ import {unstable_getThreadID} from 'scheduler/tracing';
 import {initializeUpdateQueue} from './ReactUpdateQueue.new';
 import {LegacyRoot, BlockingRoot, ConcurrentRoot} from './ReactRootTags';
 
+// FiberRootNode 和 FiberNode 的区别和作用分别是什么？属性差异挺大的。
 function FiberRootNode(containerInfo, tag, hydrate) {
   this.tag = tag;
   this.containerInfo = containerInfo;
@@ -93,7 +94,7 @@ export function createFiberRoot(
 
   // Cyclic construction. This cheats the type system right now because
   // stateNode is any.
-  const uninitializedFiber = createHostRootFiber(tag);
+  const uninitializedFiber = createHostRootFiber(tag); // -> FiberNode, FiberNode.tag = HostRoot;
   root.current = uninitializedFiber;
   uninitializedFiber.stateNode = root;
 

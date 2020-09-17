@@ -136,7 +136,7 @@ function FiberNode(
 
   this.pendingProps = pendingProps;
   this.memoizedProps = null;
-  this.updateQueue = null;
+  this.updateQueue = null; // initializeUpdateQueue(uninitializedFiber); initializeUpdateQueue(workInProgress);
   this.memoizedState = null;
   this.dependencies = null;
 
@@ -429,7 +429,7 @@ export function createHostRootFiber(tag: RootTag): Fiber {
   } else if (tag === BlockingRoot) {
     mode = BlockingMode | StrictMode;
   } else {
-    mode = NoMode;
+    mode = NoMode; // LegacyRoot
   }
 
   if (enableProfilerTimer && isDevToolsPresent) {
@@ -439,7 +439,7 @@ export function createHostRootFiber(tag: RootTag): Fiber {
     mode |= ProfileMode;
   }
 
-  return createFiber(HostRoot, null, null, mode);
+  return createFiber(HostRoot /* 3 */, null, null, mode);
 }
 
 export function createFiberFromTypeAndProps(
