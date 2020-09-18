@@ -138,10 +138,11 @@ function getContextForSubtree(
   }
 
   const fiber = getInstance(parentComponent);
-  const parentContext = findCurrentUnmaskedContext(fiber);
+  const parentContext = findCurrentUnmaskedContext(fiber); // 获取最近父级的 context 信息。
 
   if (fiber.tag === ClassComponent) {
     const Component = fiber.type;
+    // 如果自身也是 contextProvider ，合并传递给子组件。
     if (isLegacyContextProvider(Component)) {
       return processChildContext(fiber, Component, parentContext);
     }
@@ -295,7 +296,7 @@ export function updateContainer(
     }
   }
 
-  const update = createUpdate(eventTime, lane);
+  const update = createUpdate(eventTime, lane); // { eventTime, lane, tag: UpdateState, payload, callback, next}
   // Caution: React DevTools currently depends on this property
   // being called "element".
   update.payload = {element};
@@ -314,7 +315,7 @@ export function updateContainer(
     update.callback = callback;
   }
 
-  enqueueUpdate(current, update);
+  enqueueUpdate(current, update); // 更新 current.updateQueue 。
   scheduleUpdateOnFiber(current, lane, eventTime);
 
   return lane;
@@ -343,8 +344,8 @@ export function getPublicRootInstance(
     return null;
   }
   switch (containerFiber.child.tag) {
-    case HostComponent:
-      return getPublicInstance(containerFiber.child.stateNode);
+    case HostComponent: // HostComponent 有什么特别之处。
+      return getPublicInstance(containerFiber.child.stateNode); // 为什么取的是 child.stateNode 。
     default:
       return containerFiber.child.stateNode;
   }

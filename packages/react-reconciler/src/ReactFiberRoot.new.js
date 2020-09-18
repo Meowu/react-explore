@@ -31,11 +31,11 @@ function FiberRootNode(containerInfo, tag, hydrate) {
   this.tag = tag;
   this.containerInfo = containerInfo;
   this.pendingChildren = null;
-  this.current = null;
+  this.current = null; // FiberNode
   this.pingCache = null;
   this.finishedWork = null;
   this.timeoutHandle = noTimeout;
-  this.context = null;
+  this.context = null; // 提供给子组件的上下文。
   this.pendingContext = null;
   this.hydrate = hydrate;
   this.callbackNode = null;

@@ -78,7 +78,7 @@ export const requestPaint =
 let syncQueue: Array<SchedulerCallback> | null = null;
 let immediateQueueCallbackNode: mixed | null = null;
 let isFlushingSyncQueue: boolean = false;
-const initialTimeMs: number = Scheduler_now();
+const initialTimeMs: number = Scheduler_now(); // now() 。
 
 // If the initial timestamp is reasonably small, use Scheduler's `now` directly.
 // This will be the case for modern browsers that support `performance.now`. In
@@ -87,6 +87,8 @@ const initialTimeMs: number = Scheduler_now();
 // the behavior of performance.now and keep our times small enough to fit
 // within 32 bits.
 // TODO: Consider lifting this into Scheduler.
+// 优先取 performance ，不支持到话就会回退到 Date.now() 。小于 1000 说明是 performance.now()，否则减去初始的 Date.now() 的值来模拟
+// performance.now() 的行为。
 export const now =
   initialTimeMs < 10000 ? Scheduler_now : () => Scheduler_now() - initialTimeMs;
 

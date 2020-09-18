@@ -16,6 +16,8 @@ export let requestPaint;
 export let getCurrentTime;
 export let forceFrameRate;
 
+// 这个文件在打包时基于打包的环境，会被打包到标准版本中。
+
 const hasPerformanceNow =
   typeof performance === 'object' && typeof performance.now === 'function';
 

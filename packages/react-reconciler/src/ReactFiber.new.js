@@ -136,6 +136,7 @@ function FiberNode(
 
   this.pendingProps = pendingProps;
   this.memoizedProps = null;
+  // Fiber 初始化之后会给它生成一个对象: { baseState, firstBaseState, effects ...} ，只有 unmount 之后才会再次为 null 。
   this.updateQueue = null; // initializeUpdateQueue(uninitializedFiber); initializeUpdateQueue(workInProgress);
   this.memoizedState = null;
   this.dependencies = null;

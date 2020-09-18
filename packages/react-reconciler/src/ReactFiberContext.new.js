@@ -176,7 +176,7 @@ function pushTopLevelContextObject(
 
 function processChildContext(
   fiber: Fiber,
-  type: any,
+  type: any, // Component.
   parentContext: Object,
 ): Object {
   if (disableLegacyContext) {
@@ -308,6 +308,7 @@ function findCurrentUnmaskedContext(fiber: Fiber): Object {
           return node.stateNode.context;
         case ClassComponent: {
           const Component = node.type;
+          // 找最近一级的 ContextProvider 。
           if (isContextProvider(Component)) {
             return node.stateNode.__reactInternalMemoizedMergedChildContext;
           }
