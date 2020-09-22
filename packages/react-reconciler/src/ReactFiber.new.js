@@ -124,7 +124,7 @@ function FiberNode(
   this.key = key;
   this.elementType = null;
   this.type = null;
-  this.stateNode = null;
+  this.stateNode = null; // tag === HostRoot 的时候，这里存 FiberRoot 。
 
   // Fiber
   this.return = null;
@@ -151,7 +151,7 @@ function FiberNode(
   this.lanes = NoLanes;
   this.childLanes = NoLanes;
 
-  this.alternate = null;
+  this.alternate = null; // alternate 是什么。
 
   if (enableProfilerTimer) {
     // Note: The following is done to avoid a v8 performance cliff.

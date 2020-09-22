@@ -522,10 +522,10 @@ export function scheduleUpdateOnFiber(
   lane: Lane,
   eventTime: number,
 ) {
-  checkForNestedUpdates();
-  warnAboutRenderPhaseUpdatesInDEV(fiber);
+  checkForNestedUpdates(); // 检查是否有出现无限循环更新。
+  warnAboutRenderPhaseUpdatesInDEV(fiber); // 检查渲染一个组件时是否触发另外一个组件更新，避免在 render 函数内更新 state 或者 props 。
 
-  const root = markUpdateLaneFromFiberToRoot(fiber, lane);
+  const root = markUpdateLaneFromFiberToRoot(fiber, lane); // 更新从当前 Fiber 到根节点到 lane 。
   if (root === null) {
     warnAboutUpdateOnUnmountedFiberInDEV(fiber);
     return null;
@@ -630,7 +630,7 @@ function markUpdateLaneFromFiberToRoot(
   lane: Lane,
 ): FiberRoot | null {
   // Update the source fiber's lanes
-  sourceFiber.lanes = mergeLanes(sourceFiber.lanes, lane);
+  sourceFiber.lanes = mergeLanes(sourceFiber.lanes, lane); // lanes | lane
   let alternate = sourceFiber.alternate;
   if (alternate !== null) {
     alternate.lanes = mergeLanes(alternate.lanes, lane);
@@ -661,6 +661,8 @@ function markUpdateLaneFromFiberToRoot(
     node = parent;
     parent = parent.return;
   }
+  // 为什么 HostRoot 的时候才返回 root 否则返回 null ?
+  // 最后根节点必然为 HostRoot ? 不然就是已经卸载的 Fiber ?
   if (node.tag === HostRoot) {
     const root: FiberRoot = node.stateNode;
     return root;
@@ -1204,9 +1206,10 @@ export function discreteUpdates<A, B, C, D, R>(
 }
 
 export function unbatchedUpdates<A, R>(fn: (a: A) => R, a: A): R {
+  // 这里计算上下文的目的是什么。还分别在什么地方会切换执行上下文。
   const prevExecutionContext = executionContext;
-  executionContext &= ~BatchedContext;
-  executionContext |= LegacyUnbatchedContext;
+  executionContext &= ~BatchedContext; // 0, ~BatchedContext = -2;
+  executionContext |= LegacyUnbatchedContext; // -2 |= 0b0001000 = 0b0001000;
   try {
     return fn(a);
   } finally {

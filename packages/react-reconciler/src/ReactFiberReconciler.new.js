@@ -318,7 +318,7 @@ export function updateContainer(
   enqueueUpdate(current, update); // 更新 current.updateQueue 。
   scheduleUpdateOnFiber(current, lane, eventTime);
 
-  return lane;
+  return lane; // 为什么这里返回 lane 。
 }
 
 export {
