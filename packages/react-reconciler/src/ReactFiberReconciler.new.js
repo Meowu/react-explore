@@ -258,7 +258,7 @@ export function updateContainer(
     onScheduleRoot(container, element);
   }
   const current = container.current;
-  const eventTime = requestEventTime();
+  const eventTime = requestEventTime(); // 如果处于 react 上下文中，返回当前时间，否则返回一个相同的时间。
   if (__DEV__) {
     // $FlowExpectedError - jest isn't a global, and isn't recognized outside of tests
     if ('undefined' !== typeof jest) {
@@ -266,17 +266,17 @@ export function updateContainer(
       warnIfNotScopedWithMatchingAct(current);
     }
   }
-  const lane = requestUpdateLane(current);
+  const lane = requestUpdateLane(current); // 返回 SyncLane, SynBatchedLane...
 
   if (enableSchedulingProfiler) {
     markRenderScheduled(lane);
   }
 
-  const context = getContextForSubtree(parentComponent);
+  const context = getContextForSubtree(parentComponent); // 获取组件 context 对象。
   if (container.context === null) {
     container.context = context;
   } else {
-    container.pendingContext = context;
+    container.pendingContext = context; // pendingContext 怎么处理。
   }
 
   if (__DEV__) {

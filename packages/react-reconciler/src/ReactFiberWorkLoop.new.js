@@ -374,11 +374,13 @@ export function getWorkInProgressRoot(): FiberRoot | null {
 }
 
 export function requestEventTime() {
+  // executionContext 此时处于 RenderContext 或者 CommitContext 意味着我们在 React 上下文中。
   if ((executionContext & (RenderContext | CommitContext)) !== NoContext) {
     // We're inside React, so it's fine to read the actual time.
     return now();
   }
   // We're not inside React, so we may be in the middle of a browser event.
+  // 现在不在 React 上下文中，所有的 updates 使用同一个开始时间。
   if (currentEventTime !== NoTimestamp) {
     // Use the same start time for all updates until we enter React again.
     return currentEventTime;
@@ -395,10 +397,12 @@ export function getCurrentTime() {
 export function requestUpdateLane(fiber: Fiber): Lane {
   // Special cases
   const mode = fiber.mode;
+  // 为什么不等于 BlockingMode 则是 SyncLane 。
   if ((mode & BlockingMode) === NoMode) {
-    return (SyncLane: Lane);
+    return (SyncLane: Lane); // 1
   } else if ((mode & ConcurrentMode) === NoMode) {
-    return getCurrentPriorityLevel() === ImmediateSchedulerPriority
+    // 最高优先级？
+    return getCurrentPriorityLevel() === ImmediateSchedulerPriority /* 99 */
       ? (SyncLane: Lane)
       : (SyncBatchedLane: Lane);
   } else if (
@@ -525,14 +529,14 @@ export function scheduleUpdateOnFiber(
   checkForNestedUpdates(); // 检查是否有出现无限循环更新。
   warnAboutRenderPhaseUpdatesInDEV(fiber); // 检查渲染一个组件时是否触发另外一个组件更新，避免在 render 函数内更新 state 或者 props 。
 
-  const root = markUpdateLaneFromFiberToRoot(fiber, lane); // 更新从当前 Fiber 到根节点到 lane 。
+  const root = markUpdateLaneFromFiberToRoot(fiber, lane); // 更新从当前 Fiber 到根节点的 lane ，返回挂载的元素 。
   if (root === null) {
     warnAboutUpdateOnUnmountedFiberInDEV(fiber);
     return null;
   }
 
   // Mark that the root has a pending update.
-  markRootUpdated(root, lane, eventTime);
+  markRootUpdated(root, lane, eventTime); // 有待深入。
 
   if (root === workInProgressRoot) {
     // Received an update to a tree that's in the middle of rendering. Mark
@@ -662,7 +666,8 @@ function markUpdateLaneFromFiberToRoot(
     parent = parent.return;
   }
   // 为什么 HostRoot 的时候才返回 root 否则返回 null ?
-  // 最后根节点必然为 HostRoot ? 不然就是已经卸载的 Fiber ?
+  // 最后根节点必然为 HostRoot ? 不然就是无挂载的 Fiber ?
+  // 返回 node 挂载的元素。
   if (node.tag === HostRoot) {
     const root: FiberRoot = node.stateNode;
     return root;

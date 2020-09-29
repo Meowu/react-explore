@@ -40,9 +40,10 @@ function FiberRootNode(containerInfo, tag, hydrate) {
   this.hydrate = hydrate;
   this.callbackNode = null;
   this.callbackPriority = NoLanePriority;
-  this.eventTimes = createLaneMap(NoLanes);
+  this.eventTimes = createLaneMap(NoLanes); // Array<number>
   this.expirationTimes = createLaneMap(NoTimestamp);
 
+  // NoLanes -> 0
   this.pendingLanes = NoLanes;
   this.suspendedLanes = NoLanes;
   this.pingedLanes = NoLanes;

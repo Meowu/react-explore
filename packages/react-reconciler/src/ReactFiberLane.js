@@ -69,6 +69,7 @@ const OffscreenLanePriority: LanePriority = 1;
 
 export const NoLanePriority: LanePriority = 0;
 
+// 为什么是 31 。
 const TotalLanes = 31;
 
 export const NoLanes: Lanes = /*                        */ 0b0000000000000000000000000000000;
@@ -576,7 +577,7 @@ export function findRetryLane(wipLanes: Lanes): Lane {
 }
 
 function getHighestPriorityLane(lanes: Lanes) {
-  return lanes & -lanes;
+  return lanes & -lanes; // magic, 为什么这么取。
 }
 
 function getLowestPriorityLane(lanes: Lanes): Lane {
@@ -643,6 +644,7 @@ export function createLaneMap<T>(initial: T): LaneMap<T> {
   return new Array(TotalLanes).fill(initial);
 }
 
+// 这个函数的作用。
 export function markRootUpdated(
   root: FiberRoot,
   updateLane: Lane,
