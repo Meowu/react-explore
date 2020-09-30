@@ -38,7 +38,7 @@ function FiberRootNode(containerInfo, tag, hydrate) {
   this.context = null; // 提供给子组件的上下文。
   this.pendingContext = null;
   this.hydrate = hydrate;
-  this.callbackNode = null;
+  this.callbackNode = null; // Task ?
   this.callbackPriority = NoLanePriority;
   this.eventTimes = createLaneMap(NoLanes); // Array<number>
   this.expirationTimes = createLaneMap(NoTimestamp);

@@ -334,7 +334,7 @@ let legacyErrorBoundariesThatAlreadyFailed: Set<mixed> | null = null;
 
 let rootDoesHavePassiveEffects: boolean = false;
 let rootWithPendingPassiveEffects: FiberRoot | null = null;
-let pendingPassiveEffectsRenderPriority: ReactPriorityLevel = NoSchedulerPriority;
+let pendingPassiveEffectsRenderPriority: ReactPriorityLevel = NoSchedulerPriority; // 99, 98, 97, 96, 95, 90.
 let pendingPassiveEffectsLanes: Lanes = NoLanes;
 let pendingPassiveProfilerEffects: Array<Fiber> = [];
 
@@ -544,6 +544,7 @@ export function scheduleUpdateOnFiber(
     // `deferRenderPhaseUpdateToNextBatch` flag is off and this is a render
     // phase update. In that case, we don't treat render phase updates as if
     // they were interleaved, for backwards compat reasons.
+    // 在渲染阶段，插入了新的更新。
     if (
       deferRenderPhaseUpdateToNextBatch ||
       (executionContext & RenderContext) === NoContext
@@ -553,6 +554,7 @@ export function scheduleUpdateOnFiber(
         lane,
       );
     }
+    // 什么情况下会需要进行 suspend ？通常发生在 render 阶段结束后，切换到新的 updates ？
     if (workInProgressRootExitStatus === RootSuspendedWithDelay) {
       // The root already suspended with a delay, which means this render
       // definitely won't finish. Since we have a new update, let's mark it as
@@ -566,7 +568,7 @@ export function scheduleUpdateOnFiber(
 
   // TODO: requestUpdateLanePriority also reads the priority. Pass the
   // priority as an argument to that function and this one.
-  const priorityLevel = getCurrentPriorityLevel();
+  const priorityLevel = getCurrentPriorityLevel(); // Scheduler 里面会改变 currentPriorityLevel 。
 
   if (lane === SyncLane) {
     if (
@@ -576,7 +578,7 @@ export function scheduleUpdateOnFiber(
       (executionContext & (RenderContext | CommitContext)) === NoContext
     ) {
       // Register pending interactions on the root to avoid losing traced interaction data.
-      schedulePendingInteractions(root, lane);
+      schedulePendingInteractions(root, lane); // interaction 是什么？
 
       // This is a legacy edge case. The initial mount of a ReactDOM.render-ed
       // root inside of batchedUpdates should be synchronous, but layout updates
@@ -2437,11 +2439,13 @@ function commitLayoutEffectsImpl(
 export function flushPassiveEffects(): boolean {
   // Returns whether passive effects were flushed.
   if (pendingPassiveEffectsRenderPriority !== NoSchedulerPriority) {
+    // priorityLevel = Math.min(NormalSchedulerPriority, pendingPassiveEffectsRenderPriority)
     const priorityLevel =
-      pendingPassiveEffectsRenderPriority > NormalSchedulerPriority
+      pendingPassiveEffectsRenderPriority > NormalSchedulerPriority /* 97 */
         ? NormalSchedulerPriority
         : pendingPassiveEffectsRenderPriority;
     pendingPassiveEffectsRenderPriority = NoSchedulerPriority;
+    // 执行 Impl 然后恢复 currentPriorityLevel ;
     if (decoupleUpdatePriorityFromScheduler) {
       const previousLanePriority = getCurrentUpdateLanePriority();
       try {
@@ -2584,8 +2588,8 @@ function flushPassiveEffectsImpl() {
   }
 
   const prevExecutionContext = executionContext;
-  executionContext |= CommitContext;
-  const prevInteractions = pushInteractions(root);
+  executionContext |= CommitContext; // 进入 commit 阶段？
+  const prevInteractions = pushInteractions(root); // 更新并返回 __interactionsRef.current;
 
   // It's important that ALL pending passive effect destroy functions are called
   // before ANY passive effect create functions are called.

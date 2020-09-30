@@ -94,20 +94,23 @@ export const now =
 
 export function getCurrentPriorityLevel(): ReactPriorityLevel {
   switch (Scheduler_getCurrentPriorityLevel()) {
-    case Scheduler_ImmediatePriority:
+    case Scheduler_ImmediatePriority/* 1 */:
       return ImmediatePriority;
-    case Scheduler_UserBlockingPriority:
+    case Scheduler_UserBlockingPriority /* 2 */:
       return UserBlockingPriority;
-    case Scheduler_NormalPriority:
+    case Scheduler_NormalPriority/* 3 */:
       return NormalPriority;
-    case Scheduler_LowPriority:
+    case Scheduler_LowPriority/* 4 */:
       return LowPriority;
-    case Scheduler_IdlePriority:
+    case Scheduler_IdlePriority/* 5 */:
       return IdlePriority;
     default:
       invariant(false, 'Unknown priority level.');
   }
 }
+// ^^^^^
+// ReactPriorityLevel 跟 SchedulerPriority 一一对应。
+// v
 
 function reactPriorityToSchedulerPriority(reactPriorityLevel) {
   switch (reactPriorityLevel) {
@@ -130,7 +133,7 @@ export function runWithPriority<T>(
   reactPriorityLevel: ReactPriorityLevel,
   fn: () => T,
 ): T {
-  const priorityLevel = reactPriorityToSchedulerPriority(reactPriorityLevel);
+  const priorityLevel = reactPriorityToSchedulerPriority(reactPriorityLevel); // 转换到 SchedulerPriority 。
   return Scheduler_runWithPriority(priorityLevel, fn);
 }
 

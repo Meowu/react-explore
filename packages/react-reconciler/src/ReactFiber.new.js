@@ -145,8 +145,8 @@ function FiberNode(
 
   // Effects
   this.flags = NoFlags;
-  this.subtreeFlags = NoFlags;
-  this.deletions = null;
+  this.subtreeFlags = NoFlags; // 这是什么。
+  this.deletions = null; // []
 
   this.lanes = NoLanes;
   this.childLanes = NoLanes;

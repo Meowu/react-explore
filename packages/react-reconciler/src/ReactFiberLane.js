@@ -675,6 +675,7 @@ export function markRootUpdated(
   eventTimes[index] = eventTime;
 }
 
+// suspended 意味着什么。
 export function markRootSuspended(root: FiberRoot, suspendedLanes: Lanes) {
   root.suspendedLanes |= suspendedLanes;
   root.pingedLanes &= ~suspendedLanes;
