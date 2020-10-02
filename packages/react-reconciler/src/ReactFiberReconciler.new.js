@@ -83,7 +83,6 @@ import {
   getCurrentUpdateLanePriority,
   setCurrentUpdateLanePriority,
 } from './ReactFiberLane';
-import {requestCurrentSuspenseConfig} from './ReactFiberSuspenseConfig';
 import {
   scheduleRefresh,
   scheduleRoot,
@@ -139,10 +138,11 @@ function getContextForSubtree(
   }
 
   const fiber = getInstance(parentComponent);
-  const parentContext = findCurrentUnmaskedContext(fiber);
+  const parentContext = findCurrentUnmaskedContext(fiber); // 获取最近父级的 context 信息。
 
   if (fiber.tag === ClassComponent) {
     const Component = fiber.type;
+    // 如果自身也是 contextProvider ，合并传递给子组件。
     if (isLegacyContextProvider(Component)) {
       return processChildContext(fiber, Component, parentContext);
     }
@@ -258,7 +258,7 @@ export function updateContainer(
     onScheduleRoot(container, element);
   }
   const current = container.current;
-  const eventTime = requestEventTime();
+  const eventTime = requestEventTime(); // 如果处于 react 上下文中，返回当前时间，否则返回一个相同的时间。
   if (__DEV__) {
     // $FlowExpectedError - jest isn't a global, and isn't recognized outside of tests
     if ('undefined' !== typeof jest) {
@@ -266,18 +266,17 @@ export function updateContainer(
       warnIfNotScopedWithMatchingAct(current);
     }
   }
-  const suspenseConfig = requestCurrentSuspenseConfig();
-  const lane = requestUpdateLane(current, suspenseConfig);
+  const lane = requestUpdateLane(current); // 返回 SyncLane, SynBatchedLane...
 
   if (enableSchedulingProfiler) {
     markRenderScheduled(lane);
   }
 
-  const context = getContextForSubtree(parentComponent);
+  const context = getContextForSubtree(parentComponent); // 获取组件 context 对象。
   if (container.context === null) {
     container.context = context;
   } else {
-    container.pendingContext = context;
+    container.pendingContext = context; // pendingContext 怎么处理。
   }
 
   if (__DEV__) {
@@ -297,7 +296,7 @@ export function updateContainer(
     }
   }
 
-  const update = createUpdate(eventTime, lane, suspenseConfig);
+  const update = createUpdate(eventTime, lane); // { eventTime, lane, tag: UpdateState, payload, callback, next}
   // Caution: React DevTools currently depends on this property
   // being called "element".
   update.payload = {element};
@@ -316,10 +315,10 @@ export function updateContainer(
     update.callback = callback;
   }
 
-  enqueueUpdate(current, update);
+  enqueueUpdate(current, update); // 更新 current.updateQueue 。
   scheduleUpdateOnFiber(current, lane, eventTime);
 
-  return lane;
+  return lane; // 为什么这里返回 lane 。
 }
 
 export {
@@ -339,13 +338,14 @@ export {
 export function getPublicRootInstance(
   container: OpaqueRoot,
 ): React$Component<any, any> | PublicInstance | null {
-  const containerFiber = container.current;
+  const containerFiber = container.current; // FiberNode
+  // 这里为什么返回 null 。
   if (!containerFiber.child) {
     return null;
   }
   switch (containerFiber.child.tag) {
-    case HostComponent:
-      return getPublicInstance(containerFiber.child.stateNode);
+    case HostComponent: // HostComponent 有什么特别之处。
+      return getPublicInstance(containerFiber.child.stateNode); // 为什么取的是 child.stateNode 。
     default:
       return containerFiber.child.stateNode;
   }
@@ -427,7 +427,7 @@ export function attemptHydrationAtCurrentPriority(fiber: Fiber): void {
     return;
   }
   const eventTime = requestEventTime();
-  const lane = requestUpdateLane(fiber, null);
+  const lane = requestUpdateLane(fiber);
   scheduleUpdateOnFiber(fiber, lane, eventTime);
   markRetryLaneIfNotHydrated(fiber, lane);
 }

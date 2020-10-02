@@ -78,7 +78,7 @@ export const requestPaint =
 let syncQueue: Array<SchedulerCallback> | null = null;
 let immediateQueueCallbackNode: mixed | null = null;
 let isFlushingSyncQueue: boolean = false;
-const initialTimeMs: number = Scheduler_now();
+const initialTimeMs: number = Scheduler_now(); // now() 。
 
 // If the initial timestamp is reasonably small, use Scheduler's `now` directly.
 // This will be the case for modern browsers that support `performance.now`. In
@@ -87,25 +87,30 @@ const initialTimeMs: number = Scheduler_now();
 // the behavior of performance.now and keep our times small enough to fit
 // within 32 bits.
 // TODO: Consider lifting this into Scheduler.
+// 优先取 performance ，不支持到话就会回退到 Date.now() 。小于 1000 说明是 performance.now()，否则减去初始的 Date.now() 的值来模拟
+// performance.now() 的行为。
 export const now =
   initialTimeMs < 10000 ? Scheduler_now : () => Scheduler_now() - initialTimeMs;
 
 export function getCurrentPriorityLevel(): ReactPriorityLevel {
   switch (Scheduler_getCurrentPriorityLevel()) {
-    case Scheduler_ImmediatePriority:
+    case Scheduler_ImmediatePriority/* 1 */:
       return ImmediatePriority;
-    case Scheduler_UserBlockingPriority:
+    case Scheduler_UserBlockingPriority /* 2 */:
       return UserBlockingPriority;
-    case Scheduler_NormalPriority:
+    case Scheduler_NormalPriority/* 3 */:
       return NormalPriority;
-    case Scheduler_LowPriority:
+    case Scheduler_LowPriority/* 4 */:
       return LowPriority;
-    case Scheduler_IdlePriority:
+    case Scheduler_IdlePriority/* 5 */:
       return IdlePriority;
     default:
       invariant(false, 'Unknown priority level.');
   }
 }
+// ^^^^^
+// ReactPriorityLevel 跟 SchedulerPriority 一一对应。
+// v
 
 function reactPriorityToSchedulerPriority(reactPriorityLevel) {
   switch (reactPriorityLevel) {
@@ -128,7 +133,7 @@ export function runWithPriority<T>(
   reactPriorityLevel: ReactPriorityLevel,
   fn: () => T,
 ): T {
-  const priorityLevel = reactPriorityToSchedulerPriority(reactPriorityLevel);
+  const priorityLevel = reactPriorityToSchedulerPriority(reactPriorityLevel); // 转换到 SchedulerPriority 。
   return Scheduler_runWithPriority(priorityLevel, fn);
 }
 
@@ -165,13 +170,13 @@ export function cancelCallback(callbackNode: mixed) {
   }
 }
 
-export function flushSyncCallbackQueue() {
+export function flushSyncCallbackQueue(): boolean {
   if (immediateQueueCallbackNode !== null) {
     const node = immediateQueueCallbackNode;
     immediateQueueCallbackNode = null;
     Scheduler_cancelCallback(node);
   }
-  flushSyncCallbackQueueImpl();
+  return flushSyncCallbackQueueImpl();
 }
 
 function flushSyncCallbackQueueImpl() {
@@ -237,5 +242,8 @@ function flushSyncCallbackQueueImpl() {
         isFlushingSyncQueue = false;
       }
     }
+    return true;
+  } else {
+    return false;
   }
 }

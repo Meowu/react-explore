@@ -223,7 +223,7 @@ function unstable_runWithPriority(priorityLevel, eventHandler) {
     case IdlePriority:
       break;
     default:
-      priorityLevel = NormalPriority;
+      priorityLevel = NormalPriority; // 如果是 NoPriority ，默认是是 NormalPriority 3。
   }
 
   var previousPriorityLevel = currentPriorityLevel;

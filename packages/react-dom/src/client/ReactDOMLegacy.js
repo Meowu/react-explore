@@ -120,6 +120,7 @@ function legacyCreateRootFromDOMContainer(
   if (!shouldHydrate) {
     let warned = false;
     let rootSibling;
+    // 先清空 container 全部子节点。
     while ((rootSibling = container.lastChild)) {
       if (__DEV__) {
         if (
@@ -149,6 +150,7 @@ function legacyCreateRootFromDOMContainer(
     }
   }
 
+  // r = new ReactDOMBlockingRoot(container, LegacyRoot, options); r._internalRoot
   return createLegacyRoot(
     container,
     shouldHydrate
@@ -194,7 +196,7 @@ function legacyRenderSubtreeIntoContainer(
       container,
       forceHydrate,
     );
-    fiberRoot = root._internalRoot;
+    fiberRoot = root._internalRoot; // FiberRootNode
     if (typeof callback === 'function') {
       const originalCallback = callback;
       callback = function() {
@@ -203,6 +205,7 @@ function legacyRenderSubtreeIntoContainer(
       };
     }
     // Initial mount should not be batched.
+    // 计算上下文，执行函数参数，最后依次执行所有的同步等待事件。
     unbatchedUpdates(() => {
       updateContainer(children, fiberRoot, parentComponent, callback);
     });
@@ -306,7 +309,7 @@ export function render(
     }
   }
   return legacyRenderSubtreeIntoContainer(
-    null,
+    null, // 首次渲染 parent 为空。
     element,
     container,
     false,

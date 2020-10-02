@@ -27,7 +27,7 @@ import type {
 import type {Wakeable} from 'shared/ReactTypes';
 import type {ReactPriorityLevel} from './ReactInternalTypes';
 import type {OffscreenState} from './ReactFiberOffscreenComponent';
-import type {HookEffectTag} from './ReactHookEffectTags';
+import type {HookFlags} from './ReactHookEffectTags';
 
 import {unstable_wrap as Schedule_tracing_wrap} from 'scheduler/tracing';
 import {
@@ -66,12 +66,13 @@ import {
   clearCaughtError,
 } from 'shared/ReactErrorUtils';
 import {
-  NoEffect,
+  NoFlags,
   ContentReset,
   Placement,
   Snapshot,
   Update,
-} from './ReactSideEffectTags';
+  PassiveMask,
+} from './ReactFiberFlags';
 import getComponentName from 'shared/getComponentName';
 import invariant from 'shared/invariant';
 
@@ -124,16 +125,12 @@ import {
   schedulePassiveEffectCallback,
 } from './ReactFiberWorkLoop.new';
 import {
-  NoEffect as NoHookEffect,
+  NoFlags as NoHookEffect,
   HasEffect as HookHasEffect,
   Layout as HookLayout,
   Passive as HookPassive,
 } from './ReactHookEffectTags';
 import {didWarnAboutReassigningProps} from './ReactFiberBeginWork.new';
-import {
-  NoEffect as NoSubtreeTag,
-  Passive as PassiveSubtreeTag,
-} from './ReactSubtreeTags';
 
 let didWarnAboutUndefinedSnapshotBeforeUpdate: Set<mixed> | null = null;
 if (__DEV__) {
@@ -243,7 +240,7 @@ function commitBeforeMutationLifeCycles(
       return;
     }
     case ClassComponent: {
-      if (finishedWork.effectTag & Snapshot) {
+      if (finishedWork.flags & Snapshot) {
         if (current !== null) {
           const prevProps = current.memoizedProps;
           const prevState = current.memoizedState;
@@ -302,7 +299,7 @@ function commitBeforeMutationLifeCycles(
     }
     case HostRoot: {
       if (supportsMutation) {
-        if (finishedWork.effectTag & Snapshot) {
+        if (finishedWork.flags & Snapshot) {
           const root = finishedWork.stateNode;
           clearContainer(root.containerInfo);
         }
@@ -324,7 +321,7 @@ function commitBeforeMutationLifeCycles(
 }
 
 function commitHookEffectListUnmount(
-  tag: HookEffectTag,
+  tag: HookFlags,
   finishedWork: Fiber,
   nearestMountedAncestor: Fiber | null,
 ) {
@@ -350,7 +347,7 @@ function commitHookEffectListUnmount(
 // TODO: Remove this duplication.
 function commitHookEffectListUnmount2(
   // Tags to check for when deciding whether to unmount. e.g. to skip over layout effects
-  hookEffectTag: HookEffectTag,
+  hookFlags: HookFlags,
   fiber: Fiber,
   nearestMountedAncestor: Fiber | null,
 ): void {
@@ -361,7 +358,7 @@ function commitHookEffectListUnmount2(
     let effect = firstEffect;
     do {
       const {next, tag} = effect;
-      if ((tag & hookEffectTag) === hookEffectTag) {
+      if ((tag & hookFlags) === hookFlags) {
         const destroy = effect.destroy;
         if (destroy !== undefined) {
           effect.destroy = undefined;
@@ -383,7 +380,7 @@ function commitHookEffectListUnmount2(
   }
 }
 
-function commitHookEffectListMount(tag: HookEffectTag, finishedWork: Fiber) {
+function commitHookEffectListMount(tag: HookFlags, finishedWork: Fiber) {
   const updateQueue: FunctionComponentUpdateQueue | null = (finishedWork.updateQueue: any);
   const lastEffect = updateQueue !== null ? updateQueue.lastEffect : null;
   if (lastEffect !== null) {
@@ -516,7 +513,7 @@ export function commitPassiveEffectDurations(
 ): void {
   if (enableProfilerTimer && enableProfilerCommitHooks) {
     // Only Profilers with work in their subtree will have an Update effect scheduled.
-    if ((finishedWork.effectTag & Update) !== NoEffect) {
+    if ((finishedWork.flags & Update) !== NoFlags) {
       switch (finishedWork.tag) {
         case Profiler: {
           const {passiveEffectDuration} = finishedWork.stateNode;
@@ -595,14 +592,14 @@ function commitLifeCycles(
         commitHookEffectListMount(HookLayout | HookHasEffect, finishedWork);
       }
 
-      if ((finishedWork.subtreeTag & PassiveSubtreeTag) !== NoSubtreeTag) {
+      if ((finishedWork.subtreeFlags & PassiveMask) !== NoFlags) {
         schedulePassiveEffectCallback();
       }
       return;
     }
     case ClassComponent: {
       const instance = finishedWork.stateNode;
-      if (finishedWork.effectTag & Update) {
+      if (finishedWork.flags & Update) {
         if (current === null) {
           // We could update instance props and state here,
           // but instead we rely on them being set during last render.
@@ -778,7 +775,7 @@ function commitLifeCycles(
       // (eg DOM renderer may schedule auto-focus for inputs and form controls).
       // These effects should only be committed when components are first mounted,
       // aka when there is no current/alternate.
-      if (current === null && finishedWork.effectTag & Update) {
+      if (current === null && finishedWork.flags & Update) {
         const type = finishedWork.type;
         const props = finishedWork.memoizedProps;
         commitMount(instance, type, props, finishedWork);
@@ -1246,7 +1243,7 @@ function getHostSibling(fiber: Fiber): ?Instance {
     ) {
       // If it is not host node and, we might have a host node inside it.
       // Try to search down until we find one.
-      if (node.effectTag & Placement) {
+      if (node.flags & Placement) {
         // If we don't have a child, try the siblings instead.
         continue siblings;
       }
@@ -1260,7 +1257,7 @@ function getHostSibling(fiber: Fiber): ?Instance {
       }
     }
     // Check if this host node is stable or about to be placed.
-    if (!(node.effectTag & Placement)) {
+    if (!(node.flags & Placement)) {
       // Found it!
       return node.stateNode;
     }
@@ -1305,11 +1302,11 @@ function commitPlacement(finishedWork: Fiber): void {
           'in React. Please file an issue.',
       );
   }
-  if (parentFiber.effectTag & ContentReset) {
+  if (parentFiber.flags & ContentReset) {
     // Reset the text content of the parent before doing any insertions
     resetTextContent(parent);
     // Clear ContentReset from the effect tag
-    parentFiber.effectTag &= ~ContentReset;
+    parentFiber.flags &= ~ContentReset;
   }
 
   const before = getHostSibling(finishedWork);

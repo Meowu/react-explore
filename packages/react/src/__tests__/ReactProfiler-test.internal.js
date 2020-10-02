@@ -16,6 +16,7 @@ let ReactNoop;
 let Scheduler;
 let ReactCache;
 let ReactTestRenderer;
+let ReactTestRendererAct;
 let SchedulerTracing;
 let AdvanceTime;
 let AsyncText;
@@ -45,9 +46,11 @@ function loadModules({
   if (useNoopRenderer) {
     ReactNoop = require('react-noop-renderer');
     ReactTestRenderer = null;
+    ReactTestRendererAct = null;
   } else {
     ReactNoop = null;
     ReactTestRenderer = require('react-test-renderer');
+    ReactTestRendererAct = ReactTestRenderer.unstable_concurrentAct;
   }
 
   AdvanceTime = class extends React.Component {
@@ -294,6 +297,7 @@ describe('Profiler', () => {
           'read current time',
           'read current time',
           'read current time',
+          'read current time',
         ]);
 
         // Restore original mock
@@ -373,7 +377,7 @@ describe('Profiler', () => {
         Scheduler.unstable_advanceTime(20); // 30 -> 50
 
         // Updating a sibling should not report a re-render.
-        ReactTestRenderer.act(updateProfilerSibling);
+        ReactTestRendererAct(updateProfilerSibling);
 
         expect(callback).not.toHaveBeenCalled();
       });
@@ -1494,7 +1498,7 @@ describe('Profiler', () => {
         const setCountRef = React.createRef(null);
 
         let renderer = null;
-        ReactTestRenderer.act(() => {
+        ReactTestRendererAct(() => {
           renderer = ReactTestRenderer.create(
             <React.Profiler id="root-mount" onCommit={callback}>
               <React.Profiler id="a">
@@ -1522,7 +1526,7 @@ describe('Profiler', () => {
         expect(call[3]).toBe(2); // commit start time (before mutations or effects)
         expect(call[4]).toEqual(enableSchedulerTracing ? new Set() : undefined); // interaction events
 
-        ReactTestRenderer.act(() => setCountRef.current(count => count + 1));
+        ReactTestRendererAct(() => setCountRef.current(count => count + 1));
 
         expect(callback).toHaveBeenCalledTimes(2);
 
@@ -1535,7 +1539,7 @@ describe('Profiler', () => {
         expect(call[3]).toBe(1013); // commit start time (before mutations or effects)
         expect(call[4]).toEqual(enableSchedulerTracing ? new Set() : undefined); // interaction events
 
-        ReactTestRenderer.act(() => {
+        ReactTestRendererAct(() => {
           renderer.update(
             <React.Profiler id="root-update" onCommit={callback}>
               <React.Profiler id="b">
@@ -1595,7 +1599,7 @@ describe('Profiler', () => {
 
         // Test an error that happens during an effect
 
-        ReactTestRenderer.act(() => {
+        ReactTestRendererAct(() => {
           ReactTestRenderer.create(
             <React.Profiler id="root" onCommit={callback}>
               <ErrorBoundary
@@ -1683,7 +1687,7 @@ describe('Profiler', () => {
 
         let renderer = null;
 
-        ReactTestRenderer.act(() => {
+        ReactTestRendererAct(() => {
           renderer = ReactTestRenderer.create(
             <React.Profiler id="root" onCommit={callback}>
               <ErrorBoundary
@@ -1726,7 +1730,7 @@ describe('Profiler', () => {
 
         // Test an error that happens during an cleanup function
 
-        ReactTestRenderer.act(() => {
+        ReactTestRendererAct(() => {
           renderer.update(
             <React.Profiler id="root" onCommit={callback}>
               <ErrorBoundary
@@ -1874,7 +1878,7 @@ describe('Profiler', () => {
         Scheduler.unstable_advanceTime(1);
 
         let renderer;
-        ReactTestRenderer.act(() => {
+        ReactTestRendererAct(() => {
           renderer = ReactTestRenderer.create(
             <React.Profiler id="mount-test" onPostCommit={callback}>
               <ComponentWithEffects />
@@ -1896,7 +1900,7 @@ describe('Profiler', () => {
 
         Scheduler.unstable_advanceTime(1);
 
-        ReactTestRenderer.act(() => {
+        ReactTestRendererAct(() => {
           renderer.update(
             <React.Profiler id="update-test" onPostCommit={callback}>
               <ComponentWithEffects />
@@ -1918,7 +1922,7 @@ describe('Profiler', () => {
 
         Scheduler.unstable_advanceTime(1);
 
-        ReactTestRenderer.act(() => {
+        ReactTestRendererAct(() => {
           renderer.update(
             <React.Profiler id="unmount-test" onPostCommit={callback} />,
           );
@@ -1960,7 +1964,7 @@ describe('Profiler', () => {
 
         Scheduler.unstable_advanceTime(1);
 
-        ReactTestRenderer.act(() => {
+        ReactTestRendererAct(() => {
           ReactTestRenderer.create(
             <React.Profiler id="mount-test" onPostCommit={callback}>
               <ComponentWithEffects />
@@ -2014,7 +2018,7 @@ describe('Profiler', () => {
         const setCountRef = React.createRef(null);
 
         let renderer = null;
-        ReactTestRenderer.act(() => {
+        ReactTestRendererAct(() => {
           renderer = ReactTestRenderer.create(
             <React.Profiler id="root-mount" onPostCommit={callback}>
               <React.Profiler id="a">
@@ -2042,7 +2046,7 @@ describe('Profiler', () => {
         expect(call[3]).toBe(2); // commit start time (before mutations or effects)
         expect(call[4]).toEqual(enableSchedulerTracing ? new Set() : undefined); // interaction events
 
-        ReactTestRenderer.act(() => setCountRef.current(count => count + 1));
+        ReactTestRendererAct(() => setCountRef.current(count => count + 1));
 
         expect(callback).toHaveBeenCalledTimes(2);
 
@@ -2055,7 +2059,7 @@ describe('Profiler', () => {
         expect(call[3]).toBe(1013); // commit start time (before mutations or effects)
         expect(call[4]).toEqual(enableSchedulerTracing ? new Set() : undefined); // interaction events
 
-        ReactTestRenderer.act(() => {
+        ReactTestRendererAct(() => {
           renderer.update(
             <React.Profiler id="root-update" onPostCommit={callback}>
               <React.Profiler id="b">
@@ -2115,7 +2119,7 @@ describe('Profiler', () => {
 
         // Test an error that happens during an effect
 
-        ReactTestRenderer.act(() => {
+        ReactTestRendererAct(() => {
           ReactTestRenderer.create(
             <React.Profiler id="root" onPostCommit={callback}>
               <ErrorBoundary
@@ -2204,7 +2208,7 @@ describe('Profiler', () => {
 
         let renderer = null;
 
-        ReactTestRenderer.act(() => {
+        ReactTestRendererAct(() => {
           renderer = ReactTestRenderer.create(
             <React.Profiler id="root" onPostCommit={callback}>
               <ErrorBoundary
@@ -2247,7 +2251,7 @@ describe('Profiler', () => {
 
         // Test an error that happens during an cleanup function
 
-        ReactTestRenderer.act(() => {
+        ReactTestRendererAct(() => {
           renderer.update(
             <React.Profiler id="root" onPostCommit={callback}>
               <ErrorBoundary
@@ -2326,7 +2330,7 @@ describe('Profiler', () => {
 
           Scheduler.unstable_advanceTime(1);
 
-          ReactTestRenderer.act(() => {
+          ReactTestRendererAct(() => {
             SchedulerTracing.unstable_trace(
               interaction.name,
               interaction.timestamp,
