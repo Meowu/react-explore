@@ -122,7 +122,7 @@ function FiberNode(
   // Instance
   this.tag = tag;
   this.key = key;
-  this.elementType = null;
+  this.elementType = null; // React$ElementType
   this.type = null;
   this.stateNode = null; // tag === HostRoot 的时候，这里存 FiberRoot 。
 
@@ -130,11 +130,12 @@ function FiberNode(
   this.return = null;
   this.child = null;
   this.sibling = null;
-  this.index = 0;
+  this.index = 0; // index 是什么？
 
   this.ref = null;
 
-  this.pendingProps = pendingProps;
+  // 为什么叫 pending props ？因为此时只是创建了 fiber，props 还未实际被使用过？
+  this.pendingProps = pendingProps; // 组件的 props ？
   this.memoizedProps = null;
   // Fiber 初始化之后会给它生成一个对象: { baseState, firstBaseState, effects ...} ，只有 unmount 之后才会再次为 null 。
   this.updateQueue = null; // initializeUpdateQueue(uninitializedFiber); initializeUpdateQueue(workInProgress);
@@ -146,7 +147,8 @@ function FiberNode(
   // Effects
   this.flags = NoFlags;
   this.subtreeFlags = NoFlags; // 这是什么。
-  this.deletions = null; // []
+  // [] reconcile children 如果执行 deleteChild 会设置这个，同时把 flags 设为 Deletion 。
+  this.deletions = null;
 
   this.lanes = NoLanes;
   this.childLanes = NoLanes;
@@ -276,14 +278,17 @@ export function createWorkInProgress(current: Fiber, pendingProps: any): Fiber {
       workInProgress._debugHookTypes = current._debugHookTypes;
     }
 
+    // 相互引用。
     workInProgress.alternate = current;
     current.alternate = workInProgress;
   } else {
+    // 更新 props
     workInProgress.pendingProps = pendingProps;
     // Needed because Blocks store data on type.
     workInProgress.type = current.type;
 
     // We already have an alternate.
+    // alternate 跟这两个的关系。恢复默认值？
     workInProgress.subtreeFlags = NoFlags;
     workInProgress.deletions = null;
 
@@ -451,7 +456,7 @@ export function createFiberFromTypeAndProps(
   mode: TypeOfMode,
   lanes: Lanes,
 ): Fiber {
-  let fiberTag = IndeterminateComponent;
+  let fiberTag = IndeterminateComponent; // Before we know whether it is function or class
   // The resolved type is set if we know what the final type will be. I.e. it's not lazy.
   let resolvedType = type;
   if (typeof type === 'function') {
@@ -468,6 +473,7 @@ export function createFiberFromTypeAndProps(
   } else if (typeof type === 'string') {
     fiberTag = HostComponent;
   } else {
+    // 除了类组件和 string 类型，渲染后端特定类型的组件。
     getTag: switch (type) {
       case REACT_FRAGMENT_TYPE:
         return createFiberFromFragment(pendingProps.children, mode, lanes, key);
@@ -533,6 +539,7 @@ export function createFiberFromTypeAndProps(
               break;
           }
         }
+        // 无效的组件类型。
         let info = '';
         if (__DEV__) {
           if (
@@ -564,6 +571,7 @@ export function createFiberFromTypeAndProps(
   }
 
   const fiber = createFiber(fiberTag, pendingProps, key, mode);
+  // elementType === type;
   fiber.elementType = type;
   fiber.type = resolvedType;
   fiber.lanes = lanes;

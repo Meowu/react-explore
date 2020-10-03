@@ -1587,6 +1587,7 @@ function renderRootSync(root: FiberRoot, lanes: Lanes) {
 /** @noinline */
 function workLoopSync() {
   // Already timed out, so perform work without checking if we need to yield.
+  // workInProgress 是如何计算的。
   while (workInProgress !== null) {
     performUnitOfWork(workInProgress);
   }
@@ -1673,6 +1674,7 @@ function performUnitOfWork(unitOfWork: Fiber): void {
   // The current, flushed, state of this fiber is the alternate. Ideally
   // nothing should rely on this, but relying on it here means that we don't
   // need an additional field on the work in progress.
+  // 当前组件对应的 Fiber 节点在上一次更新时的Fiber节点
   const current = unitOfWork.alternate;
   setCurrentDebugFiberInDEV(unitOfWork);
 

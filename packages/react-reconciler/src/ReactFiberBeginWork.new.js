@@ -3047,6 +3047,7 @@ function remountFiber(
   }
 }
 
+// 返回下个需要递归的 fiber 。
 function beginWork(
   current: Fiber | null,
   workInProgress: Fiber,
@@ -3077,6 +3078,7 @@ function beginWork(
     const oldProps = current.memoizedProps;
     const newProps = workInProgress.pendingProps;
 
+    // 为什么是 hasLegacyContextChanged 。
     if (
       oldProps !== newProps ||
       hasLegacyContextChanged() ||
@@ -3087,10 +3089,12 @@ function beginWork(
       // This may be unset if the props are determined to be equal later (memo).
       didReceiveUpdate = true;
     } else if (!includesSomeLane(renderLanes, updateLanes)) {
+      // 没有共同的 lanes 意味着没有更新？
       didReceiveUpdate = false;
       // This fiber does not have any pending work. Bailout without entering
       // the begin phase. There's still some bookkeeping we that needs to be done
       // in this optimized path, mostly pushing stuff onto the stack.
+      // 没有需要更新的内容，出于优化而做的。
       switch (workInProgress.tag) {
         case HostRoot:
           pushHostRootContext(workInProgress);
@@ -3260,6 +3264,7 @@ function beginWork(
           return updateOffscreenComponent(current, workInProgress, renderLanes);
         }
       }
+      // 复用 current 。
       return bailoutOnAlreadyFinishedWork(current, workInProgress, renderLanes);
     } else {
       if ((current.flags & ForceUpdateForLegacySuspense) !== NoFlags) {
@@ -3275,6 +3280,7 @@ function beginWork(
       }
     }
   } else {
+    // current 为 null 意味着当前不是更新而是挂载。
     didReceiveUpdate = false;
   }
 

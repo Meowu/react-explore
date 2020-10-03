@@ -129,6 +129,7 @@ function coerceRef(
           element._owner.stateNode !== element._self
         )
       ) {
+        // string, displayName, Portal, Suspense, .Consumer, .Provider, ForwardRef...
         const componentName = getComponentName(returnFiber.type) || 'Component';
         if (!didWarnAboutStringRefs[componentName]) {
           if (warnAboutStringRefs) {
@@ -156,9 +157,12 @@ function coerceRef(
       }
     }
 
+    // 为什么是 element._owner
+    // string ref 必须有 owner 。
     if (element._owner) {
       const owner: ?Fiber = (element._owner: any);
       let inst;
+      // 类组件才能有 stringRef
       if (owner) {
         const ownerFiber = ((owner: any): Fiber);
         invariant(
@@ -168,7 +172,7 @@ function coerceRef(
             'Learn more about using refs safely here: ' +
             'https://reactjs.org/link/strict-mode-string-ref',
         );
-        inst = ownerFiber.stateNode;
+        inst = ownerFiber.stateNode; // 这个是什么？
       }
       invariant(
         inst,
@@ -186,12 +190,14 @@ function coerceRef(
       ) {
         return current.ref;
       }
+      // 把 string ref 转换成 ref 函数？
       const ref = function(value) {
-        let refs = inst.refs;
+        let refs = inst.refs; // inst 不是 FiberNode ?
         if (refs === emptyRefsObject) {
           // This is a lazy pooled frozen object, so we need to initialize.
           refs = inst.refs = {};
         }
+        // 清空 ref ?
         if (value === null) {
           delete refs[stringRef];
         } else {
@@ -290,6 +296,7 @@ function ChildReconciler(shouldTrackSideEffects) {
     returnFiber: Fiber,
     currentFirstChild: Fiber | null,
   ): null {
+    // mount
     if (!shouldTrackSideEffects) {
       // Noop.
       return null;
@@ -331,7 +338,7 @@ function ChildReconciler(shouldTrackSideEffects) {
     // to forget to do before returning it. E.g. for the single child case.
     const clone = createWorkInProgress(fiber, pendingProps);
     clone.index = 0;
-    clone.sibling = null;
+    clone.sibling = null; // 为什么 sibling 要设为 null 。
     return clone;
   }
 
@@ -378,6 +385,8 @@ function ChildReconciler(shouldTrackSideEffects) {
     textContent: string,
     lanes: Lanes,
   ) {
+    // 新建
+    // 文本节点 tag 是 HostText，如果 current 已经是 HostText 直接复用，无需新建？
     if (current === null || current.tag !== HostText) {
       // Insert
       const created = createFiberFromText(textContent, returnFiber.mode, lanes);
@@ -965,7 +974,7 @@ function ChildReconciler(shouldTrackSideEffects) {
 
       // First, validate keys.
       // We'll get a different iterator later for the main pass.
-      const newChildren = iteratorFn.call(newChildrenIterable);
+      const newChildren = iteratorFn.call(newChildrenIterable); // iterable
       if (newChildren) {
         let knownKeys = null;
         let step = newChildren.next();
@@ -993,6 +1002,7 @@ function ChildReconciler(shouldTrackSideEffects) {
       oldFiber !== null && !step.done;
       newIdx++, step = newChildren.next()
     ) {
+      // 为什么 oldFiber.index > newIdx 然后结束迭代。
       if (oldFiber.index > newIdx) {
         nextOldFiber = oldFiber;
         oldFiber = null;
@@ -1000,6 +1010,7 @@ function ChildReconciler(shouldTrackSideEffects) {
         nextOldFiber = oldFiber.sibling;
       }
       const newFiber = updateSlot(returnFiber, oldFiber, step.value, lanes);
+      // 带有 key 的文本节点会返回 null 。
       if (newFiber === null) {
         // TODO: This breaks on empty slots like null children. That's
         // unfortunate because it triggers the slow path all the time. We need
@@ -1125,6 +1136,7 @@ function ChildReconciler(shouldTrackSideEffects) {
     return created;
   }
 
+  // child.$$typeof === REACT_ELEMENT_TYPE
   function reconcileSingleElement(
     returnFiber: Fiber,
     currentFirstChild: Fiber | null,
@@ -1345,7 +1357,9 @@ function ChildReconciler(shouldTrackSideEffects) {
       );
     }
 
+    // iterator or null
     if (getIteratorFn(newChild)) {
+      // iterator
       return reconcileChildrenIterator(
         returnFiber,
         currentFirstChild,
@@ -1359,6 +1373,7 @@ function ChildReconciler(shouldTrackSideEffects) {
     }
 
     if (__DEV__) {
+      // 子组件不能是一个函数，必须调用返回一个组件或者 <Component /> 。
       if (typeof newChild === 'function') {
         warnOnFunctionType(returnFiber);
       }

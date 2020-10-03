@@ -178,7 +178,7 @@ export function getRootHostContext(
     case DOCUMENT_FRAGMENT_NODE: {
       type = nodeType === DOCUMENT_NODE ? '#document' : '#fragment';
       const root = (rootContainerInstance: any).documentElement;
-      namespace = root ? root.namespaceURI : getChildNamespace(null, '');
+      namespace = root ? root.namespaceURI : getChildNamespace(null, ''); // HTML_NAMESPACE
       break;
     }
     default: {
