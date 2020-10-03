@@ -195,7 +195,7 @@ function legacyRenderSubtreeIntoContainer(
     root = container._reactRootContainer = legacyCreateRootFromDOMContainer(
       container,
       forceHydrate,
-    );
+    ); // { _internalRoot: FiberRoot }
     fiberRoot = root._internalRoot; // FiberRootNode
     if (typeof callback === 'function') {
       const originalCallback = callback;

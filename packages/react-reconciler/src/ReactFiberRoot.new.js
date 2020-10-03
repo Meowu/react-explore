@@ -28,7 +28,7 @@ import {LegacyRoot, BlockingRoot, ConcurrentRoot} from './ReactRootTags';
 
 // FiberRootNode 和 FiberNode 的区别和作用分别是什么？属性差异挺大的。
 function FiberRootNode(containerInfo, tag, hydrate) {
-  this.tag = tag;
+  this.tag = tag; // LegacyRoot 或者 ConcurrentRoot
   this.containerInfo = containerInfo;
   this.pendingChildren = null;
   this.current = null; // FiberNode
@@ -61,6 +61,8 @@ function FiberRootNode(containerInfo, tag, hydrate) {
   if (enableSchedulerTracing) {
     this.interactionThreadID = unstable_getThreadID();
     this.memoizedInteractions = new Set();
+    // Interaction = { __count: number, id: number, name: string, timestamp: number }
+    // new Map<number, Set<Interaction>>()
     this.pendingInteractionMap = new Map();
   }
   if (enableSuspenseCallback) {
@@ -82,6 +84,7 @@ function FiberRootNode(containerInfo, tag, hydrate) {
   }
 }
 
+// createContainer 会调用这里来创建一个 FiberRootNode 。
 export function createFiberRoot(
   containerInfo: any,
   tag: RootTag,
@@ -95,11 +98,12 @@ export function createFiberRoot(
 
   // Cyclic construction. This cheats the type system right now because
   // stateNode is any.
+  // 互相引用。
   const uninitializedFiber = createHostRootFiber(tag); // -> FiberNode, FiberNode.tag = HostRoot;
-  root.current = uninitializedFiber;
-  uninitializedFiber.stateNode = root;
+  root.current = uninitializedFiber; // root 的 FiberNode 。
+  uninitializedFiber.stateNode = root; // FiberNode 的 stateNode 是 FiberRootNode 。
 
-  initializeUpdateQueue(uninitializedFiber);
+  initializeUpdateQueue(uninitializedFiber); // fiber.updateQueue = { baseState, firstBaseState, lastBaseState ... }
 
   return root;
 }

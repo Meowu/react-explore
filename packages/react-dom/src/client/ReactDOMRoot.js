@@ -197,7 +197,7 @@ export function createLegacyRoot(
   container: Container,
   options?: RootOptions,
 ): RootType {
-  return new ReactDOMBlockingRoot(container, LegacyRoot, options);
+  return new ReactDOMBlockingRoot(container, LegacyRoot /* 0 */, options);
 }
 
 export function isValidContainer(node: mixed): boolean {

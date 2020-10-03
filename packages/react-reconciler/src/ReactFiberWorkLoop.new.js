@@ -333,8 +333,8 @@ let firstUncaughtError = null;
 let legacyErrorBoundariesThatAlreadyFailed: Set<mixed> | null = null;
 
 let rootDoesHavePassiveEffects: boolean = false;
-let rootWithPendingPassiveEffects: FiberRoot | null = null;
-let pendingPassiveEffectsRenderPriority: ReactPriorityLevel = NoSchedulerPriority; // 99, 98, 97, 96, 95, 90.
+let rootWithPendingPassiveEffects: FiberRoot | null = null; // 这个值只在 commitRoot 那里设置。
+let pendingPassiveEffectsRenderPriority: ReactPriorityLevel = NoSchedulerPriority /* 90 */; // 99, 98, 97, 96, 95, 90.
 let pendingPassiveEffectsLanes: Lanes = NoLanes;
 let pendingPassiveProfilerEffects: Array<Fiber> = [];
 
@@ -396,6 +396,7 @@ export function getCurrentTime() {
 
 export function requestUpdateLane(fiber: Fiber): Lane {
   // Special cases
+  // createFiber 的时候会指定 mode 。
   const mode = fiber.mode;
   // 为什么不等于 BlockingMode 则是 SyncLane 。
   if ((mode & BlockingMode) === NoMode) {
@@ -536,7 +537,7 @@ export function scheduleUpdateOnFiber(
   }
 
   // Mark that the root has a pending update.
-  markRootUpdated(root, lane, eventTime); // 有待深入。
+  markRootUpdated(root, lane, eventTime); // 有待深入。更新各个 lanes 以及 root.eventTimes 。
 
   if (root === workInProgressRoot) {
     // Received an update to a tree that's in the middle of rendering. Mark
@@ -568,17 +569,19 @@ export function scheduleUpdateOnFiber(
 
   // TODO: requestUpdateLanePriority also reads the priority. Pass the
   // priority as an argument to that function and this one.
+  // 99, 98, 97, 96, 95...90
   const priorityLevel = getCurrentPriorityLevel(); // Scheduler 里面会改变 currentPriorityLevel 。
 
   if (lane === SyncLane) {
     if (
       // Check if we're inside unbatchedUpdates
+      // 首次挂载时，会执行 unbatchedUpdates 把上下文切换到 LegacyUnbatchedContext 。
       (executionContext & LegacyUnbatchedContext) !== NoContext &&
       // Check if we're not already rendering
       (executionContext & (RenderContext | CommitContext)) === NoContext
     ) {
       // Register pending interactions on the root to avoid losing traced interaction data.
-      schedulePendingInteractions(root, lane); // interaction 是什么？
+      schedulePendingInteractions(root, lane); // interactions 是什么？
 
       // This is a legacy edge case. The initial mount of a ReactDOM.render-ed
       // root inside of batchedUpdates should be synchronous, but layout updates
@@ -992,13 +995,14 @@ function performSyncWorkOnRoot(root) {
     'Should not already be working.',
   );
 
+  // 这里执行 flushPassiveEffects ，首次挂载时有可能还没有执行过 commitRoot 以至于还没有 rootWithPassiveEffects 。
   flushPassiveEffects();
 
   let lanes;
   let exitStatus;
   if (
     root === workInProgressRoot &&
-    includesSomeLane(root.expiredLanes, workInProgressRootRenderLanes)
+    includesSomeLane(root.expiredLanes, workInProgressRootRenderLanes) // (a & b) !== NoLanes
   ) {
     // There's a partial tree, and at least one of its lanes has expired. Finish
     // rendering it before rendering the rest of the expired work.
@@ -1216,7 +1220,7 @@ export function unbatchedUpdates<A, R>(fn: (a: A) => R, a: A): R {
   // 这里计算上下文的目的是什么。还分别在什么地方会切换执行上下文。
   const prevExecutionContext = executionContext;
   executionContext &= ~BatchedContext; // 0, ~BatchedContext = -2;
-  executionContext |= LegacyUnbatchedContext; // -2 |= 0b0001000 = 0b0001000;
+  executionContext |= LegacyUnbatchedContext; //  => 0b0001000;
   try {
     return fn(a);
   } finally {
@@ -1344,6 +1348,7 @@ function prepareFreshStack(root: FiberRoot, lanes: Lanes) {
     }
   }
   workInProgressRoot = root;
+  // current.alternate
   workInProgress = createWorkInProgress(root.current, null);
   workInProgressRootRenderLanes = subtreeRenderLanes = workInProgressRootIncludedLanes = lanes;
   workInProgressRootExitStatus = RootIncomplete;
@@ -1514,13 +1519,13 @@ export function renderHasNotSuspendedYet(): boolean {
 
 function renderRootSync(root: FiberRoot, lanes: Lanes) {
   const prevExecutionContext = executionContext;
-  executionContext |= RenderContext;
+  executionContext |= RenderContext; // 切换到 RenderContext 。
   const prevDispatcher = pushDispatcher();
 
   // If the root or lanes have changed, throw out the existing stack
   // and prepare a fresh one. Otherwise we'll continue where we left off.
   if (workInProgressRoot !== root || workInProgressRootRenderLanes !== lanes) {
-    prepareFreshStack(root, lanes);
+    prepareFreshStack(root, lanes); // root 已经变了，更新 workInProgress
     startWorkOnPendingInteractions(root, lanes);
   }
 
@@ -2440,6 +2445,7 @@ export function flushPassiveEffects(): boolean {
   // Returns whether passive effects were flushed.
   if (pendingPassiveEffectsRenderPriority !== NoSchedulerPriority) {
     // priorityLevel = Math.min(NormalSchedulerPriority, pendingPassiveEffectsRenderPriority)
+    // 这里为什么取较小值。
     const priorityLevel =
       pendingPassiveEffectsRenderPriority > NormalSchedulerPriority /* 97 */
         ? NormalSchedulerPriority
@@ -3342,6 +3348,7 @@ function scheduleInteractions(
     return;
   }
 
+  // interactions 可能被多个 lane 引用。
   if (interactions.size > 0) {
     const pendingInteractionMap = root.pendingInteractionMap;
     const pendingInteractions = pendingInteractionMap.get(lane);

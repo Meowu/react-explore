@@ -69,7 +69,7 @@ const OffscreenLanePriority: LanePriority = 1;
 
 export const NoLanePriority: LanePriority = 0;
 
-// 为什么是 31 。
+// 为什么是 31 。32 位整数？
 const TotalLanes = 31;
 
 export const NoLanes: Lanes = /*                        */ 0b0000000000000000000000000000000;
@@ -598,6 +598,7 @@ export function pickArbitraryLane(lanes: Lanes): Lane {
   return getHighestPriorityLane(lanes);
 }
 
+// lane 在 32 位中的下标位置。
 function pickArbitraryLaneIndex(lanes: Lanes) {
   return 31 - clz32(lanes);
 }
@@ -664,18 +665,18 @@ export function markRootUpdated(
 
   // Unsuspend any update at equal or lower priority.
   const higherPriorityLanes = updateLane - 1; // Turns 0b1000 into 0b0111
-
+  // 这里作用是什么。有没有可能是，这些 lanes 决定了后面取在 eventTimes 中取哪个值？？只是猜测。
   root.suspendedLanes &= higherPriorityLanes;
   root.pingedLanes &= higherPriorityLanes;
 
   const eventTimes = root.eventTimes;
-  const index = laneToIndex(updateLane);
+  const index = laneToIndex(updateLane); // 计算 lane 在 32 位中的索引。
   // We can always overwrite an existing timestamp because we prefer the most
   // recent event, and we assume time is monotonically increasing.
-  eventTimes[index] = eventTime;
+  eventTimes[index] = eventTime; // 根据索引更新 lane 的时间。
 }
 
-// suspended 意味着什么。
+// suspended 意味着什么。清除相应的 expirationTimes ?
 export function markRootSuspended(root: FiberRoot, suspendedLanes: Lanes) {
   root.suspendedLanes |= suspendedLanes;
   root.pingedLanes &= ~suspendedLanes;
@@ -826,6 +827,7 @@ export function getBumpedLaneForHydration(
 
 const clz32 = Math.clz32 ? Math.clz32 : clz32Fallback;
 
+// 计算前导 0 个数。
 // Count leading zeros. Only used on lanes, so assume input is an integer.
 // Based on:
 // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math/clz32

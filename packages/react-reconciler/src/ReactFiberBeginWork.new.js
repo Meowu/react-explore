@@ -3073,6 +3073,7 @@ function beginWork(
   }
 
   if (current !== null) {
+    // 区分这两个 props 。
     const oldProps = current.memoizedProps;
     const newProps = workInProgress.pendingProps;
 

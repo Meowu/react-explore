@@ -155,7 +155,7 @@ export function initializeUpdateQueue<State>(fiber: Fiber): void {
     firstBaseUpdate: null,
     lastBaseUpdate: null,
     shared: {
-      pending: null,
+      pending: null, // Update<State>
     },
     effects: null,
   };

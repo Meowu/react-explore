@@ -266,12 +266,13 @@ export function updateContainer(
       warnIfNotScopedWithMatchingAct(current);
     }
   }
-  const lane = requestUpdateLane(current); // 返回 SyncLane, SynBatchedLane...
+  const lane = requestUpdateLane(current); // 返回 SyncLane, SynBatchedLane... 需求继续理清。
 
   if (enableSchedulingProfiler) {
     markRenderScheduled(lane);
   }
 
+  // 首次挂载时，parentComponent 为 null，这是是空对象 {} 。
   const context = getContextForSubtree(parentComponent); // 获取组件 context 对象。
   if (container.context === null) {
     container.context = context;
@@ -316,6 +317,8 @@ export function updateContainer(
   }
 
   enqueueUpdate(current, update); // 更新 current.updateQueue 。
+
+  // 开始调度。
   scheduleUpdateOnFiber(current, lane, eventTime);
 
   return lane; // 为什么这里返回 lane 。
@@ -339,12 +342,14 @@ export function getPublicRootInstance(
   container: OpaqueRoot,
 ): React$Component<any, any> | PublicInstance | null {
   const containerFiber = container.current; // FiberNode
-  // 这里为什么返回 null 。
+  // 这里为什么返回 null，没有 child 说明还没有实例？ 。
+  // 这里为什么是 child 。
   if (!containerFiber.child) {
     return null;
   }
   switch (containerFiber.child.tag) {
     case HostComponent: // HostComponent 有什么特别之处。
+      // stateNode 可能还不是真正的 instance ？
       return getPublicInstance(containerFiber.child.stateNode); // 为什么取的是 child.stateNode 。
     default:
       return containerFiber.child.stateNode;
