@@ -252,6 +252,7 @@ export function resolveLazyComponentTag(Component: Function): WorkTag {
 }
 
 // This is used to create an alternate fiber to do work on.
+// fiber 复用
 export function createWorkInProgress(current: Fiber, pendingProps: any): Fiber {
   let workInProgress = current.alternate;
   if (workInProgress === null) {
@@ -783,6 +784,9 @@ export function createFiberFromPortal(
   const pendingProps = portal.children !== null ? portal.children : [];
   const fiber = createFiber(HostPortal, pendingProps, portal.key, mode);
   fiber.lanes = lanes;
+  // 为什么这里要单独更新 stateNode ?
+  // 是为了保证事件冒泡、context 等功能在组件树保持一致？
+  // implementation 是什么。
   fiber.stateNode = {
     containerInfo: portal.containerInfo,
     pendingChildren: null, // Used by persistent updates

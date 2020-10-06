@@ -326,6 +326,7 @@ function ChildReconciler(shouldTrackSideEffects) {
       if (existingChild.key !== null) {
         existingChildren.set(existingChild.key, existingChild);
       } else {
+        // index 是基于在 children 的位置，所以不会出现重复？
         existingChildren.set(existingChild.index, existingChild);
       }
       existingChild = existingChild.sibling;
@@ -352,9 +353,10 @@ function ChildReconciler(shouldTrackSideEffects) {
       // Noop.
       return lastPlacedIndex;
     }
-    const current = newFiber.alternate;
+    const current = newFiber.alternate; // 复用
     if (current !== null) {
       const oldIndex = current.index;
+      // 右移
       if (oldIndex < lastPlacedIndex) {
         // This is a move.
         newFiber.flags = Placement;
@@ -407,6 +409,7 @@ function ChildReconciler(shouldTrackSideEffects) {
     lanes: Lanes,
   ): Fiber {
     if (current !== null) {
+      // elementType === type 意味着什么？
       if (
         current.elementType === element.type ||
         // Keep this check inline so it only runs on the false path:
@@ -458,6 +461,7 @@ function ChildReconciler(shouldTrackSideEffects) {
     portal: ReactPortal,
     lanes: Lanes,
   ): Fiber {
+    // 这里判断条件等依据分别是什么。
     if (
       current === null ||
       current.tag !== HostPortal ||
@@ -592,6 +596,7 @@ function ChildReconciler(shouldTrackSideEffects) {
       return updateTextNode(returnFiber, oldFiber, '' + newChild, lanes);
     }
 
+    // 对比新旧 child 的 key 是否相等，否则返回 null 。
     if (typeof newChild === 'object' && newChild !== null) {
       switch (newChild.$$typeof) {
         case REACT_ELEMENT_TYPE: {
@@ -607,6 +612,7 @@ function ChildReconciler(shouldTrackSideEffects) {
             }
             return updateElement(returnFiber, oldFiber, newChild, lanes);
           } else {
+            // 为什么 key 不一样的时候 return null 。此时意味着需要新建而不是更新？
             return null;
           }
         }
@@ -627,6 +633,7 @@ function ChildReconciler(shouldTrackSideEffects) {
       }
 
       if (isArray(newChild) || getIteratorFn(newChild)) {
+        // 为什么存在 key 直接 return null 。
         if (key !== null) {
           return null;
         }
@@ -653,6 +660,7 @@ function ChildReconciler(shouldTrackSideEffects) {
     newChild: any,
     lanes: Lanes,
   ): Fiber | null {
+    // 文本节点没有 key 所以使用 index 存放在 map 对象中。
     if (typeof newChild === 'string' || typeof newChild === 'number') {
       // Text nodes don't have keys, so we neither have to check the old nor
       // new node for the key. If both are text nodes, they match.
@@ -660,6 +668,7 @@ function ChildReconciler(shouldTrackSideEffects) {
       return updateTextNode(returnFiber, matchedFiber, '' + newChild, lanes);
     }
 
+    // 对象类型有 key 所以使用 key 存放在 map 中。
     if (typeof newChild === 'object' && newChild !== null) {
       switch (newChild.$$typeof) {
         case REACT_ELEMENT_TYPE: {
@@ -812,10 +821,12 @@ function ChildReconciler(shouldTrackSideEffects) {
     let newIdx = 0;
     let nextOldFiber = null;
     for (; oldFiber !== null && newIdx < newChildren.length; newIdx++) {
+      // 左移，为什么结束遍历？
       if (oldFiber.index > newIdx) {
         nextOldFiber = oldFiber;
         oldFiber = null;
       } else {
+        // 右移
         nextOldFiber = oldFiber.sibling;
       }
       const newFiber = updateSlot(
@@ -838,9 +849,10 @@ function ChildReconciler(shouldTrackSideEffects) {
         if (oldFiber && newFiber.alternate === null) {
           // We matched the slot, but we didn't reuse the existing fiber, so we
           // need to delete the existing child.
-          deleteChild(returnFiber, oldFiber);
+          deleteChild(returnFiber, oldFiber); // 需要删除的 child
         }
       }
+      // 如果是复用节点，靠右的节点保留在原来的位置，并作为下次的定位起始。
       lastPlacedIndex = placeChild(newFiber, lastPlacedIndex, newIdx);
       if (previousNewFiber === null) {
         // TODO: Move out of the loop. This only happens for the first run.
@@ -856,6 +868,7 @@ function ChildReconciler(shouldTrackSideEffects) {
       oldFiber = nextOldFiber;
     }
 
+    // 遍历完全部新 children，old children 可能还有，确保删除。
     if (newIdx === newChildren.length) {
       // We've reached the end of the new children. We can delete the rest.
       deleteRemainingChildren(returnFiber, oldFiber);
@@ -1112,6 +1125,8 @@ function ChildReconciler(shouldTrackSideEffects) {
     return resultingFirstChild;
   }
 
+  // 直接删除，完整更新整个节点。
+  // 如果已经是 text 节点，则复用，否则删除并新建一个 text 节点。
   function reconcileSingleTextNode(
     returnFiber: Fiber,
     currentFirstChild: Fiber | null,
@@ -1145,6 +1160,7 @@ function ChildReconciler(shouldTrackSideEffects) {
   ): Fiber {
     const key = element.key;
     let child = currentFirstChild;
+    // 只要找到一个 key 匹配即可。
     while (child !== null) {
       // TODO: If key === null and child.key === null, then this only applies to
       // the first item in the list.
@@ -1220,6 +1236,8 @@ function ChildReconciler(shouldTrackSideEffects) {
       child = child.sibling;
     }
 
+    // 如果没有匹配的，则新建一个。
+    // console.log('ReconcileSingleElement None Match and Create New', ...arguments);
     if (element.type === REACT_FRAGMENT_TYPE) {
       const created = createFiberFromFragment(
         element.props.children,
@@ -1302,6 +1320,7 @@ function ChildReconciler(shouldTrackSideEffects) {
     // Handle object types
     const isObject = typeof newChild === 'object' && newChild !== null;
 
+    // 单个节点 diff 。
     if (isObject) {
       switch (newChild.$$typeof) {
         case REACT_ELEMENT_TYPE:
