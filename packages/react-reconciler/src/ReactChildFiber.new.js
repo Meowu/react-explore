@@ -1272,11 +1272,13 @@ function ChildReconciler(shouldTrackSideEffects) {
           child.stateNode.containerInfo === portal.containerInfo &&
           child.stateNode.implementation === portal.implementation
         ) {
+          // 复用
           deleteRemainingChildren(returnFiber, child.sibling);
           const existing = useFiber(child, portal.children || []);
           existing.return = returnFiber;
           return existing;
         } else {
+          // 全部删除后面新建一个。
           deleteRemainingChildren(returnFiber, child);
           break;
         }
