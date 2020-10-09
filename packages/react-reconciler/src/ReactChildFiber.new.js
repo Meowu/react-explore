@@ -824,7 +824,7 @@ function ChildReconciler(shouldTrackSideEffects) {
       // 左移，为什么结束遍历？
       if (oldFiber.index > newIdx) {
         nextOldFiber = oldFiber;
-        oldFiber = null;
+        oldFiber = null; // 为什么设为 null 。
       } else {
         // 右移
         nextOldFiber = oldFiber.sibling;
@@ -835,6 +835,7 @@ function ChildReconciler(shouldTrackSideEffects) {
         newChildren[newIdx],
         lanes,
       );
+      // key 不匹配，不可复用？为什么这里直接跳出循环。
       if (newFiber === null) {
         // TODO: This breaks on empty slots like null children. That's
         // unfortunate because it triggers the slow path all the time. We need
@@ -846,13 +847,14 @@ function ChildReconciler(shouldTrackSideEffects) {
         break;
       }
       if (shouldTrackSideEffects) {
+        // alternate === null 说明是新建节点?
         if (oldFiber && newFiber.alternate === null) {
           // We matched the slot, but we didn't reuse the existing fiber, so we
           // need to delete the existing child.
           deleteChild(returnFiber, oldFiber); // 需要删除的 child
         }
       }
-      // 如果是复用节点，靠右的节点保留在原来的位置，并作为下次的定位起始。
+      // 更新节点位置。如果是复用节点，靠右的节点保留在原来的位置，并作为下次的定位起始。
       lastPlacedIndex = placeChild(newFiber, lastPlacedIndex, newIdx);
       if (previousNewFiber === null) {
         // TODO: Move out of the loop. This only happens for the first run.
@@ -868,13 +870,14 @@ function ChildReconciler(shouldTrackSideEffects) {
       oldFiber = nextOldFiber;
     }
 
-    // 遍历完全部新 children，old children 可能还有，确保删除。
+    // 1. 遍历完 newChildren 如果 oldFiber 还未遍历完说明本次更新有节点被删除了，确保删除。
     if (newIdx === newChildren.length) {
       // We've reached the end of the new children. We can delete the rest.
       deleteRemainingChildren(returnFiber, oldFiber);
       return resultingFirstChild;
     }
 
+    // 2. 旧的节点已经遍历完，newChildren 还未遍历完，说明本次会新增节点。
     if (oldFiber === null) {
       // If we don't have any more existing children we can choose a fast path
       // since the rest will all be insertions.
@@ -899,6 +902,7 @@ function ChildReconciler(shouldTrackSideEffects) {
     const existingChildren = mapRemainingChildren(returnFiber, oldFiber);
 
     // Keep scanning and use the map to restore deleted items as moves.
+    // oldFiber 和 newChildren 都未遍历完，意味着本次更新中，有节点移动了位置。
     for (; newIdx < newChildren.length; newIdx++) {
       const newFiber = updateFromMap(
         existingChildren,
