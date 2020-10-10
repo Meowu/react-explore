@@ -114,11 +114,12 @@ if (__DEV__) {
 let debugCounter = 1;
 
 function FiberNode(
-  tag: WorkTag,
+  tag: WorkTag, // 0-24
   pendingProps: mixed,
   key: null | string,
   mode: TypeOfMode,
 ) {
+  console.log('create FiberNode:  ', ...arguments);
   // Instance
   this.tag = tag;
   this.key = key;
@@ -457,6 +458,7 @@ export function createFiberFromTypeAndProps(
   mode: TypeOfMode,
   lanes: Lanes,
 ): Fiber {
+  console.log('createFiberFromTypeAndProps: ', ...arguments)
   let fiberTag = IndeterminateComponent; // Before we know whether it is function or class
   // The resolved type is set if we know what the final type will be. I.e. it's not lazy.
   let resolvedType = type;

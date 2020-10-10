@@ -28,7 +28,7 @@ import {LegacyRoot, BlockingRoot, ConcurrentRoot} from './ReactRootTags';
 
 // FiberRootNode 和 FiberNode 的区别和作用分别是什么？属性差异挺大的。
 function FiberRootNode(containerInfo, tag, hydrate) {
-  this.tag = tag; // LegacyRoot 或者 ConcurrentRoot
+  this.tag = tag; // LegacyRoot, BlockingRoot, ConcurrentRoot | 0, 1, 2
   this.containerInfo = containerInfo;
   this.pendingChildren = null;
   this.current = null; // FiberNode
