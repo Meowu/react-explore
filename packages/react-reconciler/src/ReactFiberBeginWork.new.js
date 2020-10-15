@@ -3265,6 +3265,7 @@ function beginWork(
         }
       }
       // 复用 current 。
+      console.log('没有更新, 复用 current 节点。')
       return bailoutOnAlreadyFinishedWork(current, workInProgress, renderLanes);
     } else {
       if ((current.flags & ForceUpdateForLegacySuspense) !== NoFlags) {
