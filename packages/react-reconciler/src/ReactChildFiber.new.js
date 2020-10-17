@@ -363,9 +363,13 @@ function ChildReconciler(shouldTrackSideEffects) {
         return lastPlacedIndex;
       } else {
         // This item can stay in place.
+        // 这里有可能在原位置，有可能比上次的位置大，它保留在原来位置
+        // 意味着后面全部的都可能跟着变。
+        // 保持原位，返回 oldIndex 作为 lastPlacedIndex 。
         return oldIndex;
       }
     } else {
+      // newFiber.index = newIndex，为什么还是返回 lastPlacedIndex 。
       // This is an insertion.
       newFiber.flags = Placement;
       return lastPlacedIndex;
@@ -669,6 +673,7 @@ function ChildReconciler(shouldTrackSideEffects) {
     }
 
     // 对象类型有 key 所以使用 key 存放在 map 中。
+    // 如果 matchedFiber 为 null ，可能是 key 变了，或者位置变了，直接新建？
     if (typeof newChild === 'object' && newChild !== null) {
       switch (newChild.$$typeof) {
         case REACT_ELEMENT_TYPE: {
@@ -821,14 +826,19 @@ function ChildReconciler(shouldTrackSideEffects) {
     let newIdx = 0;
     let nextOldFiber = null;
     for (; oldFiber !== null && newIdx < newChildren.length; newIdx++) {
+      // 调试时发现，如果在当前节点之前的节点，已经被删除了又出现（比如说基于条件判断渲染为 null），都会触发这个条件。
       // 左移，为什么结束遍历？
       if (oldFiber.index > newIdx) {
         nextOldFiber = oldFiber;
+        // update: oldFiber 在更后面的位置，如果 newChildren[newIdx] 不为 null 意味着此时
+        // 新插入了一个节点。设为 null 相当于告诉 updateSlot 创建一个新的节点而不是复用。
+        // 既然不是复用，也就意味着不会触发下面的 deleteChild(returnFiber, oldFiber) 。
         oldFiber = null; // 为什么设为 null 。
       } else {
         // 右移
         nextOldFiber = oldFiber.sibling;
       }
+      // key 不相等，返回 null 。
       const newFiber = updateSlot(
         returnFiber,
         oldFiber,
@@ -836,6 +846,8 @@ function ChildReconciler(shouldTrackSideEffects) {
         lanes,
       );
       // key 不匹配，不可复用？为什么这里直接跳出循环。
+      // 这里意味着此时 newChildren[newIdx] 为 null 或者不是一个合法的子节点。
+      // 这里就会中断第一轮遍历，其实是否有更好的方法？
       if (newFiber === null) {
         // TODO: This breaks on empty slots like null children. That's
         // unfortunate because it triggers the slow path all the time. We need
@@ -848,6 +860,8 @@ function ChildReconciler(shouldTrackSideEffects) {
       }
       if (shouldTrackSideEffects) {
         // alternate === null 说明是新建节点?
+        // 什么时候 oldFiber 会为 null 。 -> 上面的 oldFiber.index > newIdx
+        // 什么情况下会触发这个条件。
         if (oldFiber && newFiber.alternate === null) {
           // We matched the slot, but we didn't reuse the existing fiber, so we
           // need to delete the existing child.
@@ -855,6 +869,7 @@ function ChildReconciler(shouldTrackSideEffects) {
         }
       }
       // 更新节点位置。如果是复用节点，靠右的节点保留在原来的位置，并作为下次的定位起始。
+      // 此时 newFiber index 是 0，这里会设置 index 。
       lastPlacedIndex = placeChild(newFiber, lastPlacedIndex, newIdx);
       if (previousNewFiber === null) {
         // TODO: Move out of the loop. This only happens for the first run.
@@ -867,6 +882,7 @@ function ChildReconciler(shouldTrackSideEffects) {
         previousNewFiber.sibling = newFiber;
       }
       previousNewFiber = newFiber;
+      // 恢复 oldFiber 。假设前面插入了一个节点，继续 diff 后面的节点。
       oldFiber = nextOldFiber;
     }
 
@@ -878,6 +894,8 @@ function ChildReconciler(shouldTrackSideEffects) {
     }
 
     // 2. 旧的节点已经遍历完，newChildren 还未遍历完，说明本次会新增节点。
+    // 首次挂载时也会触发这个条件，因为此时 oldFiber/currentFirstChild 为 null 。
+    // 所有都 newChildren 都是新增。
     if (oldFiber === null) {
       // If we don't have any more existing children we can choose a fast path
       // since the rest will all be insertions.
@@ -902,8 +920,10 @@ function ChildReconciler(shouldTrackSideEffects) {
     const existingChildren = mapRemainingChildren(returnFiber, oldFiber);
 
     // Keep scanning and use the map to restore deleted items as moves.
-    // oldFiber 和 newChildren 都未遍历完，意味着本次更新中，有节点移动了位置。
+    // oldFiber 和 newChildren 都未遍历完，意味着本次更新中，有节点移动了位置或者被删除了。
+    // 接着遍历后面的子节点。
     for (; newIdx < newChildren.length; newIdx++) {
+      // 根据 key 或 index 从旧节点（Map）中取对应的节点，如果找到则复用，找不到则新建。
       const newFiber = updateFromMap(
         existingChildren,
         returnFiber,
@@ -913,6 +933,7 @@ function ChildReconciler(shouldTrackSideEffects) {
       );
       if (newFiber !== null) {
         if (shouldTrackSideEffects) {
+          // 发现可复用的节点，从 Map 中移除，避免后面被误删。
           if (newFiber.alternate !== null) {
             // The new fiber is a work in progress, but if there exists a
             // current, that means that we reused the fiber. We need to delete
