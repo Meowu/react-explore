@@ -681,6 +681,7 @@ function cutOffTailIfNeeded(
   }
 }
 
+// 这个方法的作用是什么。
 function bubbleProperties(completedWork: Fiber) {
   const didBailout =
     completedWork.alternate !== null &&
@@ -789,6 +790,7 @@ function bubbleProperties(completedWork: Fiber) {
   completedWork.childLanes = newChildLanes;
 }
 
+// 同样根据不同的 Fiber 类型做不同的处理，基于 current 来判断是 mount 还是 update 。
 function completeWork(
   current: Fiber | null,
   workInProgress: Fiber,
@@ -1042,6 +1044,7 @@ function completeWork(
         ) {
           transferActualDuration(workInProgress);
         }
+        // 为什么这种情况下会产生新的任务。
         // Don't bubble properties in this case.
         return workInProgress;
       }

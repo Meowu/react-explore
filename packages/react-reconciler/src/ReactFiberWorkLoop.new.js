@@ -1719,6 +1719,7 @@ function completeUnitOfWork(unitOfWork: Fiber): void {
         !enableProfilerTimer ||
         (completedWork.mode & ProfileMode) === NoMode
       ) {
+        // 如果 current 为空意味着什么。
         next = completeWork(current, completedWork, subtreeRenderLanes);
       } else {
         startProfilerTimer(completedWork);
@@ -1728,6 +1729,7 @@ function completeUnitOfWork(unitOfWork: Fiber): void {
       }
       resetCurrentDebugFiberInDEV();
 
+      // 什么情况下在 complete 的时候会产生新的任务。
       if (next !== null) {
         // Completing this fiber spawned new work. Work on that next.
         workInProgress = next;

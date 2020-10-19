@@ -728,7 +728,7 @@ export function diffProperties(
           if (!styleUpdates) {
             styleUpdates = {};
           }
-          styleUpdates[styleName] = '';
+          styleUpdates[styleName] = ''; // 这里仅仅是搜集 lastStyle 的 properties ?
         }
       }
     } else if (propKey === DANGEROUSLY_SET_INNER_HTML || propKey === CHILDREN) {
@@ -802,6 +802,7 @@ export function diffProperties(
           if (!updatePayload) {
             updatePayload = [];
           }
+          // lastProps 中没有 style，并且此时 styleUpdates 为空，意味着要清空 propKey ? 取决于 commit 的时候怎么处理 updatePayload 的。
           updatePayload.push(propKey, styleUpdates);
         }
         styleUpdates = nextProp;
