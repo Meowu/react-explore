@@ -286,14 +286,16 @@ export function createInstance(
   } else {
     parentNamespace = ((hostContext: any): HostContextProd);
   }
+  // 根据命名空间返回一个 dom 元素，script 和 select 会做一些特殊的处理。
   const domElement: Instance = createElement(
     type,
     props,
     rootContainerInstance,
     parentNamespace,
   );
-  precacheFiberNode(internalInstanceHandle, domElement);
-  updateFiberProps(domElement, props);
+  // 这里是干什么用的，似乎生产环境元素上找不到这些属性。
+  precacheFiberNode(internalInstanceHandle, domElement); // el['__reactFiber$' + randomKey] = fiber;
+  updateFiberProps(domElement, props); // el['__reactProps$' + randomKey] = props;
   return domElement;
 }
 
