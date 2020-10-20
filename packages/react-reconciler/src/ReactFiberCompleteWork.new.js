@@ -202,9 +202,10 @@ if (supportsMutation) {
     // We only have the top Fiber that was created but we need recurse down its
     // children to find all the terminal nodes.
     let node = workInProgress.child;
+    // 实际上这里是一个深度遍历的过程，执行到这里的时候，它已经是最底级，只会有一层的 child 。
     while (node !== null) {
       if (node.tag === HostComponent || node.tag === HostText) {
-        appendInitialChild(parent, node.stateNode);
+        appendInitialChild(parent, node.stateNode); // appendChild
       } else if (enableFundamentalAPI && node.tag === FundamentalComponent) {
         appendInitialChild(parent, node.stateNode.instance);
       } else if (node.tag === HostPortal) {
@@ -212,6 +213,7 @@ if (supportsMutation) {
         // down its children. Instead, we'll get insertions from each child in
         // the portal directly.
       } else if (node.child !== null) {
+        // 这种是什么情况。
         node.child.return = node;
         node = node.child;
         continue;
@@ -219,6 +221,11 @@ if (supportsMutation) {
       if (node === workInProgress) {
         return;
       }
+      // 这里有点迷惑，自顶向下的过程，假设第一个 child 节点没有 sibling，但是有 child ，此时 child 的 child 似乎永远不会被操作。
+      // 体现不出递归操作。
+      // 这里可能是迎合上面的第二个 else if 条件的情况？如果当前没有同辈节点了，返回上一级。
+      // 因为是深度遍历的过程，上一级已经处理过了，如果上一级有同辈节点，就处理同辈节点。
+      // TODO: 构造一个例子来证明这里的逻辑。
       while (node.sibling === null) {
         if (node.return === null || node.return === workInProgress) {
           return;
@@ -681,6 +688,7 @@ function cutOffTailIfNeeded(
   }
 }
 
+// 这个方法的作用是什么。
 function bubbleProperties(completedWork: Fiber) {
   const didBailout =
     completedWork.alternate !== null &&
@@ -789,6 +797,7 @@ function bubbleProperties(completedWork: Fiber) {
   completedWork.childLanes = newChildLanes;
 }
 
+// 同样根据不同的 Fiber 类型做不同的处理，基于 current 来判断是 mount 还是 update 。
 function completeWork(
   current: Fiber | null,
   workInProgress: Fiber,
@@ -895,6 +904,8 @@ function completeWork(
             markUpdate(workInProgress);
           }
         } else {
+          // 到这里 type 是不是已经确定是元素名称了。
+          // 创建一个 dom 元素。
           const instance = createInstance(
             type,
             newProps,
@@ -1042,6 +1053,7 @@ function completeWork(
         ) {
           transferActualDuration(workInProgress);
         }
+        // 为什么这种情况下会产生新的任务。
         // Don't bubble properties in this case.
         return workInProgress;
       }
@@ -1369,6 +1381,7 @@ function completeWork(
       bubbleProperties(workInProgress);
       return null;
     }
+    // FundamentalComponent 是什么。
     case FundamentalComponent: {
       if (enableFundamentalAPI) {
         const fundamentalImpl = workInProgress.type.impl;
@@ -1389,6 +1402,7 @@ function completeWork(
             fundamentalImpl,
             fundamentalState || {},
           );
+          // instance 是由 fundamentalImpl 得到的。
           const instance = ((getFundamentalComponentInstance(
             fundamentalInstance,
           ): any): Instance);

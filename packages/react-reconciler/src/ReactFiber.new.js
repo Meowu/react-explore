@@ -120,6 +120,7 @@ function FiberNode(
   mode: TypeOfMode,
 ) {
   console.log('create FiberNode:  ', ...arguments);
+  // 文本节点的 elementType 和 type 为 null。
   // Instance
   this.tag = tag;
   this.key = key;

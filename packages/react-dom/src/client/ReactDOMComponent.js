@@ -417,7 +417,7 @@ export function createElement(
     rootContainerElement,
   );
   let domElement: Element;
-  let namespaceURI = parentNamespace;
+  let namespaceURI = parentNamespace; // html, svg, mathML...
   if (namespaceURI === HTML_NAMESPACE) {
     namespaceURI = getIntrinsicNamespace(type);
   }
@@ -452,10 +452,13 @@ export function createElement(
         }
       }
       div.innerHTML = '<script><' + '/script>'; // eslint-disable-line
+      // 这里这么写是为了确保 script 跟 div 解除绑定，以免受到父元素 div 的影响？
       // This is guaranteed to yield a script element.
       const firstChild = ((div.firstChild: any): HTMLScriptElement);
       domElement = div.removeChild(firstChild);
     } else if (typeof props.is === 'string') {
+      // 跟 Web Component 相关。
+      // The new element will be given an is attribute whose value is the custom element's tag name.
       // $FlowIssue `createElement` should be updated for Web Components
       domElement = ownerDocument.createElement(type, {is: props.is});
     } else {
@@ -473,6 +476,8 @@ export function createElement(
       // and https://github.com/facebook/react/issues/14239
       if (type === 'select') {
         const node = ((domElement: any): HTMLSelectElement);
+        // 对于 select 元素，multiple 为 true 时选项不会再是一个 Dropdown 列表，而是一个同时显示多个的滚动列表。
+        // size 则指定滚动列表显示多少个，默认值是 0 ，当它大于 1 时跟 multiple=true 的效果是一样的。
         if (props.multiple) {
           node.multiple = true;
         } else if (props.size) {
@@ -728,7 +733,7 @@ export function diffProperties(
           if (!styleUpdates) {
             styleUpdates = {};
           }
-          styleUpdates[styleName] = '';
+          styleUpdates[styleName] = ''; // 这里仅仅是搜集 lastStyle 的 properties ?
         }
       }
     } else if (propKey === DANGEROUSLY_SET_INNER_HTML || propKey === CHILDREN) {
@@ -802,6 +807,7 @@ export function diffProperties(
           if (!updatePayload) {
             updatePayload = [];
           }
+          // lastProps 中没有 style，并且此时 styleUpdates 为空，意味着要清空 propKey ? 取决于 commit 的时候怎么处理 updatePayload 的。
           updatePayload.push(propKey, styleUpdates);
         }
         styleUpdates = nextProp;

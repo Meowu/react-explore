@@ -12,10 +12,18 @@ function App() {
   return (
     <div className="App">
       <header className="App-header">
-        <img src={logo} className="App-logo" alt="------||432423231111~~~~~~~app-logo-app~~~~~~~~~--000001111111" />
-        <p>
+        <div>
+          <span>aaa</span>
+        </div>
+        <img src={logo} className="App-logo" alt="------||43242323~~~~~~~app-logo-app~~~~~~~~~-222-1111111111112222" />
+        <div className="App-block">
           Edit <code>src/App.js</code> and save to reload.
-        </p>
+          <p>
+            <span>111</span>
+            <span>222</span>
+            <span>333</span>
+          </p>
+        </div>
         { show ? (<p>May be I should be hidden.</p>) : null }
         <a
           className="App-link"
