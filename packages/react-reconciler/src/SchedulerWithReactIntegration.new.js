@@ -174,12 +174,13 @@ export function flushSyncCallbackQueue(): boolean {
   if (immediateQueueCallbackNode !== null) {
     const node = immediateQueueCallbackNode;
     immediateQueueCallbackNode = null;
-    Scheduler_cancelCallback(node);
+    Scheduler_cancelCallback(node); // node.callback = null;
   }
   return flushSyncCallbackQueueImpl();
 }
 
 function flushSyncCallbackQueueImpl() {
+  // syncQueue 是什么。
   if (!isFlushingSyncQueue && syncQueue !== null) {
     // Prevent re-entrancy.
     isFlushingSyncQueue = true;

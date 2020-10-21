@@ -15,7 +15,7 @@ function App() {
         <div>
           <span>aaa</span>
         </div>
-        <img src={logo} className="App-logo" alt="------||43242323~~~~~~~app-logo-app~~~~~~~~~-222-1111111111112222" />
+        <img src={logo} className="App-logo" alt="------||43242323~~~~~~~app-logo-app~~~~~~~11111111112222" />
         <div className="App-block">
           Edit <code>src/App.js</code> and save to reload.
           <p>

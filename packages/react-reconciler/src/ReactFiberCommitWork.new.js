@@ -440,6 +440,7 @@ function commitHookEffectListMount2(fiber: Fiber): void {
   const updateQueue: FunctionComponentUpdateQueue | null = (fiber.updateQueue: any);
   const lastEffect = updateQueue !== null ? updateQueue.lastEffect : null;
   if (lastEffect !== null) {
+    // 为什么从 lastEffect 开始最后又回到 firstEffect 。
     const firstEffect = lastEffect.next;
     let effect = firstEffect;
     do {
@@ -486,7 +487,7 @@ function commitHookEffectListMount2(fiber: Fiber): void {
             ) {
               try {
                 startPassiveEffectTimer();
-                effect.destroy = create();
+                effect.destroy = create(); // useEffect 返回的 destroy 函数？
               } finally {
                 recordPassiveEffectDuration(fiber);
               }

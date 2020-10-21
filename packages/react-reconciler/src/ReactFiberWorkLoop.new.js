@@ -1679,6 +1679,12 @@ function performUnitOfWork(unitOfWork: Fiber): void {
   setCurrentDebugFiberInDEV(unitOfWork);
 
   let next;
+  /**
+   * 如果有子节点，这里 next 返回子节点的第一个节点，不然返回 null。
+   * 然后执行 completeUnitOfWork 。
+   * 如果当前 unitOfWork 有子节点，则将其子节点的 dom 添加到 unitOfWork 中，
+   * 否则返回到父级，将 unitOfWork 添加到父级 dom 中。
+   * */
   if (enableProfilerTimer && (unitOfWork.mode & ProfileMode) !== NoMode) {
     startProfilerTimer(unitOfWork);
     // 这里的 subtreeRenderLanes 是在哪里设置了的。
@@ -1778,6 +1784,7 @@ function completeUnitOfWork(unitOfWork: Fiber): void {
       }
     }
 
+    // 完成一个节点后，找它的同辈节点，如果没有则返回父节点。
     const siblingFiber = completedWork.sibling;
     if (siblingFiber !== null) {
       // If there is more work to do in this returnFiber, do that next.
@@ -1926,6 +1933,7 @@ function commitRootImpl(root, renderPriorityLevel) {
     // getSnapshotBeforeUpdate is called.
     focusedInstanceHandle = prepareForCommit(root.containerInfo);
     shouldFireAfterActiveInstanceBlur = false;
+
 
     commitBeforeMutationEffects(finishedWork);
 
@@ -2608,7 +2616,7 @@ function flushPassiveEffectsImpl() {
   // e.g. a destroy function in one component may unintentionally override a ref
   // value set by a create function in another component.
   // Layout effects have the same constraint.
-  flushPassiveUnmountEffects(root.current);
+  flushPassiveUnmountEffects(root.current); // interaction.
   flushPassiveMountEffects(root.current);
 
   if (enableProfilerTimer && enableProfilerCommitHooks) {
